@@ -1,0 +1,13 @@
+{
+  "command": [
+    "tmux",
+    "list-clients",
+    "-F",
+    " tty:#{client_tty} term:#{client_termname} session:#{client_session}"
+  ],
+  "output": " tty:/dev/ttys003 term:xterm-256color session:0\n tty:/dev/ttys005 term:xterm-256color session:1\n",
+  "status": "success",
+  "run_index": 4,
+  "record_at": "2016-07-20 12:02:16 -0700",
+  "init_at": "2016-07-20 12:02:16 -0700"
+}

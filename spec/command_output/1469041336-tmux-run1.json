@@ -1,0 +1,13 @@
+{
+  "command": [
+    "tmux",
+    "select-pane",
+    "-t",
+    "1:1.0"
+  ],
+  "output": "",
+  "status": "success",
+  "run_index": 1,
+  "record_at": "2016-07-20 12:02:16 -0700",
+  "init_at": "2016-07-20 12:02:16 -0700"
+}

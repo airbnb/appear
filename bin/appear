@@ -1,0 +1,7 @@
+#!/usr/bin/env ruby
+require 'pathname'
+
+$:.unshift(Pathname.new(__FILE__).realpath.dirname.dirname.join('./lib').to_s)
+
+require 'appear/command'
+command = Appear::Command.new.execute(ARGV)

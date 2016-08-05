@@ -1,0 +1,8 @@
+{
+  "command": "lsof /dev/ttys003",
+  "output": "COMMAND  PID              USER   FD   TYPE DEVICE  SIZE/OFF NODE NAME\nzsh     6525 jake_teton-landis    0u   CHR   16,3 0t1914074  647 /dev/ttys003\nzsh     6525 jake_teton-landis    1u   CHR   16,3 0t1914074  647 /dev/ttys003\nzsh     6525 jake_teton-landis    2u   CHR   16,3 0t1914074  647 /dev/ttys003\nzsh     6525 jake_teton-landis   10u   CHR   16,3    0t1628  647 /dev/ttys003\ntmux    6844 jake_teton-landis    0u   CHR   16,3 0t1914074  647 /dev/ttys003\ntmux    6844 jake_teton-landis    1u   CHR   16,3 0t1914074  647 /dev/ttys003\ntmux    6844 jake_teton-landis    2u   CHR   16,3 0t1914074  647 /dev/ttys003\ntmux    6846 jake_teton-landis    9u   CHR   16,3 0t1914074  647 /dev/ttys003\n",
+  "status": "success",
+  "run_index": 1,
+  "record_at": "2016-07-20 12:02:19 -0700",
+  "init_at": "2016-07-20 12:02:16 -0700"
+}

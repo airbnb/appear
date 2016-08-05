@@ -1,0 +1,14 @@
+{
+  "command": [
+    "ps",
+    "-p",
+    "8836",
+    "-o",
+    "ppid=,command="
+  ],
+  "output": " 6846 zsh -c which reattach-to-user-namespace >/dev/null 2>&1 && reattach-to-user-namespace -l /usr/local/bin/zsh || /usr/local/bin/zsh\n",
+  "status": "success",
+  "run_index": 2,
+  "record_at": "2016-07-20 12:02:16 -0700",
+  "init_at": "2016-07-20 12:02:16 -0700"
+}

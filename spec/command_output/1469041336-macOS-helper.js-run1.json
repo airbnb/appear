@@ -1,0 +1,12 @@
+{
+  "command": [
+    "/Users/jake_teton-landis/airlab-stable/bin/appear/tools/macOS-helper.js",
+    "iterm2_reveal_tty",
+    "\"/dev/ttys005\""
+  ],
+  "output": "2016-07-20 12:02:20.040 macOS-helper.js[14965:132696] warning: failed to get scripting definition from /usr/bin/osascript; it may not be scriptable.\n{\"status\":\"ok\",\"value\":true}\n",
+  "status": "success",
+  "run_index": 1,
+  "record_at": "2016-07-20 12:02:20 -0700",
+  "init_at": "2016-07-20 12:02:16 -0700"
+}

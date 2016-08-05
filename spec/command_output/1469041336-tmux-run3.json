@@ -1,0 +1,14 @@
+{
+  "command": [
+    "tmux",
+    "list-panes",
+    "-a",
+    "-F",
+    " pid:#{pane_pid} session:#{session_name} window:#{window_index} pane:#{pane_index} command_name:#{pane_current_command} active:#{pane_active}"
+  ],
+  "output": " pid:6856 session:0 window:0 pane:0 command_name:ruby active:1\n pid:8607 session:1 window:0 pane:0 command_name:zsh active:1\n pid:8836 session:1 window:1 pane:0 command_name:nano active:1\n",
+  "status": "success",
+  "run_index": 3,
+  "record_at": "2016-07-20 12:02:16 -0700",
+  "init_at": "2016-07-20 12:02:16 -0700"
+}
