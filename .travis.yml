@@ -1,4 +1,7 @@
 language: ruby
+script:
+  # Please add to Rakefile instead of this section.
+  - bundle exec rake
 rvm:
   - 2.2.3
 before_install: gem install bundler -v 1.10.6
