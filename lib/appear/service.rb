@@ -50,12 +50,7 @@ module Appear
 
     private
 
-    # rubocop bringing the hate
     def services
-      @services
-      @services
-      @services
-      @services
       @services
     end
   end
