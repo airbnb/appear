@@ -28,7 +28,7 @@ RSpec.describe(Appear::Processes) do
     it 'result has expected attrs' do
       result = subject.get_info(pid)
       expect(result.pid).to eq(pid)
-      expect(result.name).to eq('ruby')
+      expect(result.name).to ba_a(String)
       expect(result.command).to be_a(Array)
       expect(result.parent_pid).to be_a(Fixnum)
     end
