@@ -2,15 +2,17 @@ module Appear
   # all the adjustable options for a Appear::Instance
   class Config
     # if set, the Appear::Instance will log debug information to this file.
-    # @type String, nil
+    # @return [String, nil] default nil
     attr_accessor :log_file
 
     # if false, the Appear::Instance will log debug information to STDERR.
-    # @type Boolean
+    # @return [Boolean] default true
     attr_accessor :silent
 
     # Record everything executed by Runner service to spec/command_output.
     # Intended for generating test cases.
+    #
+    # @return [Boolean] default false
     attr_accessor :record_runs
 
     # sets defaults

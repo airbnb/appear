@@ -43,7 +43,7 @@ module Appear
 
     # look up all the processes between the given pid and PID 1
     # @param pid [Number]
-    # @return Array<ProcessInfo>
+    # @return [Array<ProcessInfo>]
     def process_tree(pid)
       tree = [ get_info(pid) ]
       while tree.last.pid > 1
@@ -52,7 +52,7 @@ module Appear
       tree
     end
 
-    # @return Array<Integer> pids found
+    # @return [Array<Integer>] pids found
     def pgrep(pattern)
       output = run(['pgrep', '-lf', pattern])
       output.lines.map do |line|

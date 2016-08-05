@@ -22,7 +22,7 @@ module Appear
     # @param field [Symbol] the method or hash field name to join on.
     # @param tables [Array<Any>] arrays of any sort of object, so long as it is
     # either a hash, or implements the given field.
-    # @return Array<Join>
+    # @return [Array<Join>]
     def self.join(field, *tables)
       by_field = Hash.new { |h, k| h[k] = self.new }
 

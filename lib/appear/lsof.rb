@@ -22,12 +22,12 @@ module Appear
       end
     end
 
-    # TODO: replace with a Join?
+    # Represents a pane's connection to a TTY.
     class PaneConnection
       attr_reader :pane, :connection, :process
       # @param pane [#tty] a pane in a terminal emulator
       # @param connection [Appear::Lsof::Connection] a connection of a process
-      # to a file -- usually a TTY device.
+      #   to a file -- usually a TTY device.
       # @param process [Appear::Processes::ProcessInfo] a process
       def initialize(pane, connection, process)
         @pane = pane
@@ -59,7 +59,7 @@ module Appear
     #
     # @param tree [Array<Process>]
     # @param panes [Array<Pane>]
-    # @return Array<PaneConnection>
+    # @return [Array<PaneConnection>]
     def join_via_tty(tree, panes)
       hitlist = {}
       tree.each do |process|
@@ -91,8 +91,9 @@ module Appear
     end
 
     # list connections to files
+    #
     # @param files [Array<String>] files to query
-    # @return Hash<String, Array<Connection>> - map of filename to connections
+    # @return [Hash<String, Array<Connection>>] map of filename to connections
     def lsofs(files, opts = {})
       cached = files.select { |f| @cache[f] }
       uncached = files.reject { |f| @cache[f] }
