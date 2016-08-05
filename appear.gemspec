@@ -9,9 +9,19 @@ Gem::Specification.new do |spec|
   spec.authors       = ["Jake Teton-Landis"]
   spec.email         = ["just.1.jake@gmail.com"]
 
-  spec.summary       = %q{TODO: Write a short summary, because Rubygems requires one.}
-  spec.description   = %q{TODO: Write a longer description or delete this line.}
-  spec.homepage      = "TODO: Put your gem's website or public repo URL here."
+  spec.summary       = %q{Appear your terminal programs in your gui!}
+  spec.description   = <<-EOS
+    Appear is a tool for revealing a given process in your terminal. Given a
+    process ID, `appear` finds the terminal emulator view (be it a window, tab, or
+    pane) containing that process and shows it to you. Appear understands terminal
+    multiplexers like `tmux`, so if your target process is in a multiplexer
+    session, `appear` will reveal a client connected to that session, or start one
+    if needed.
+
+    This project intends to support all POSIX operating systems eventually, but
+    currently only supports macOS.
+  EOS
+  spec.homepage      = "https://github.com/airbnb/appear"
 
   # Prevent pushing this gem to RubyGems.org by setting 'allowed_push_host', or
   # delete this section to allow pushing this gem to any host.
