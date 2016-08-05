@@ -8,9 +8,13 @@ RSpec.describe(Appear::Processes) do
   let (:pid)    { Process.pid }
   subject { described_class.new(:output => output, :runner => runner) }
 
+  it 'what is travis doing?' do
+    puts "pid of this process: #{pid}"
+  end
+
   describe '#alive?' do
     it 'true when pid alive' do
-      expect(subject.alive?(pid)).to be(true)
+      expect(subject.alive?(::Process.pid)).to be(true)
     end
 
     it 'false when pid dead' do
