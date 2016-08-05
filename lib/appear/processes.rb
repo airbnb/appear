@@ -2,6 +2,8 @@ require 'appear/constants'
 require 'appear/service'
 
 module Appear
+  # Raised if Processes tries to get info for a dead process, or a PID that is
+  # otherwise not found.
   class DeadProcess < Error; end
 
   # The Processes service handles looking up information about a system
@@ -9,6 +11,8 @@ module Appear
   class Processes < Service
     delegate :run, :runner
 
+    # contains information about a process. Returned by Processes#get_info and
+    # its derivatives.
     class ProcessInfo
       attr_accessor :pid, :command, :name, :parent_pid
       def initialize(hash)
@@ -23,6 +27,10 @@ module Appear
       @cache = {}
     end
 
+    # Get info about a process by PID, including its command and parent_pid.
+    #
+    # @param pid [Integer]
+    # @return [ProcessInfo]
     def get_info(pid)
       result = @cache[pid]
       unless result
@@ -32,6 +40,10 @@ module Appear
       result
     end
 
+    # Is the given process alive?
+    #
+    # @param pid [Integer]
+    # @return [Boolean]
     def alive?(pid)
       begin
         ::Process.getpgid(pid)
@@ -52,6 +64,7 @@ module Appear
       tree
     end
 
+    # @param pattern [String]
     # @return [Array<Integer>] pids found
     def pgrep(pattern)
       output = run(['pgrep', '-lf', pattern])
