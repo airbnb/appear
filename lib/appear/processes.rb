@@ -58,7 +58,7 @@ module Appear
     # @return [Array<ProcessInfo>]
     def process_tree(pid)
       tree = [ get_info(pid) ]
-      while tree.last.pid > 1
+      while tree.last.pid > 1 && tree.last.parent_pid != 0
         tree << get_info(tree.last.parent_pid)
       end
       tree
