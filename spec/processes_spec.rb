@@ -10,6 +10,12 @@ RSpec.describe(Appear::Processes) do
 
   subject { described_class.new(:output => output, :runner => runner) }
 
+  # print the version of ps
+  before :all do
+    puts "ps version:"
+    system('ps --version')
+  end
+
   # sometimes we want to use a subprocess of cat, but we don't want to remember
   # to clean it up. But, we don'\t want to do unnecessary cleanups if we didn't
   # use subprocess. soooo
@@ -29,9 +35,15 @@ RSpec.describe(Appear::Processes) do
 
   def kill_cat
     i, o, info = cat
-    Process.kill('KILL', info.pid)
-    # wait for exactly cat_info.pid
-    Process.wait(cat_info.pid, 1)
+    begin
+      Process.kill('KILL', info.pid)
+      # wait for exactly cat_info.pid
+      Process.wait(cat_info.pid, 1)
+    rescue Errno::ESRCH, Errno::ECHILD
+      # we get these errors if the process is already dead, in which case, we
+      # don't care at all.
+      nil
+    end
   end
 
   after :each do
