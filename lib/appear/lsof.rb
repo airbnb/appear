@@ -68,7 +68,6 @@ module Appear
 
       ttys = panes.map(&:tty)
       if panes.all? {|p| p.respond_to?(:pids) }
-        puts "using pids in join_via_tty"
         pids = hitlist.keys + panes.map(&:pids).flatten
         # binding.pry
         lsofs = lsofs(ttys, :pids => pids)
