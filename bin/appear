@@ -1,7 +1,11 @@
 #!/usr/bin/env ruby
 require 'pathname'
 
-$:.unshift(Pathname.new(__FILE__).realpath.dirname.dirname.join('./lib').to_s)
+begin
+  require 'appear/command'
+rescue LoadError
+  $:.unshift(Pathname.new(__FILE__).realpath.dirname.dirname.join('./lib').to_s)
+  require 'appear/command'
+end
 
-require 'appear/command'
 command = Appear::Command.new.execute(ARGV)

@@ -1,9 +1,13 @@
 #!/usr/bin/env ruby
 require 'pathname'
 
-$:.unshift(Pathname.new(__FILE__).realpath.dirname.dirname.join('./lib').to_s)
+begin
+  require 'appear'
+rescue LoadError
+  $:.unshift(Pathname.new(__FILE__).realpath.dirname.dirname.join('./lib').to_s)
+  require 'appear'
+end
 
-require 'appear'
 
 module Appear::PParents
   def self.main
