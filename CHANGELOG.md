@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.3
+
+remove some binding.pry that really shouldn't have been there
+
 ## 1.0.2
 
 - README improvements: badges, links, contributing
