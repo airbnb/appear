@@ -1,7 +1,19 @@
 language: ruby
+matrix:
+  # see https://docs.travis-ci.com/user/customizing-the-build/#Build-Matrix
+  # see https://docs.travis-ci.com/user/osx-ci-environment/
+  allow_failures:
+    - os: linux
+  include:
+    - os: linux
+      rvm: 1.9.3
+    - os: linux
+      rvm: 2.2.3
+    - os: osx
+      osx_image: xcode7 # 10.10
+    # - os: osx
+    # - osx_image: xcode7.2 # 10.11
 script:
   # Please add to Rakefile instead of this section.
   - bundle exec rake
-rvm:
-  - 2.2.3
 before_install: gem install bundler -v 1.10.6

@@ -58,7 +58,7 @@ module Appear
     # @return [Array<ProcessInfo>]
     def process_tree(pid)
       tree = [ get_info(pid) ]
-      while tree.last.pid > 1
+      while tree.last.pid > 1 && tree.last.parent_pid != 0
         tree << get_info(tree.last.parent_pid)
       end
       tree
@@ -79,7 +79,7 @@ module Appear
 
     def fetch_info(pid)
       raise DeadProcess.new("cannot fetch info for dead PID #{pid}") unless alive?(pid)
-      output = run(['ps', '-p', pid.to_s, '-o', 'ppid=,command='])
+      output = run(['ps', '-p', pid.to_s, '-o', 'ppid=', '-o', 'command='])
       ppid, *command = output.strip.split(/\s+/).reject(&:empty?)
       name = File.basename(command.first)
       ProcessInfo.new({:pid => pid.to_i, :parent_pid => ppid.to_i, :command => command, :name => name})

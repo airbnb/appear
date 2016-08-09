@@ -1,5 +1,6 @@
 require 'pathname'
 require 'json'
+require 'time'
 require 'appear/constants'
 require 'appear/service'
 require 'appear/runner'
