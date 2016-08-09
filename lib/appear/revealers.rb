@@ -73,7 +73,6 @@ module Appear
       end
 
       def panes
-        binding.pry
         pids = services.processes.pgrep('iTerm2')
         services.mac_os.call_method('iterm2_panes').map do |hash|
           hash[:pids] = pids

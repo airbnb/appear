@@ -1,5 +1,4 @@
 require 'appear/service'
-require 'pry'
 
 module Appear
   # The LSOF service co-ordinates access to the `lsof` system utility.  LSOF
@@ -69,7 +68,6 @@ module Appear
       ttys = panes.map(&:tty)
       if panes.all? {|p| p.respond_to?(:pids) }
         pids = hitlist.keys + panes.map(&:pids).flatten
-        # binding.pry
         lsofs = lsofs(ttys, :pids => pids)
       else
         lsofs = lsofs(ttys)
