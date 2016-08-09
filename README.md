@@ -2,6 +2,8 @@
 
 Appear your terminal programs in your gui!
 
+[![Build Status](https://secure.travis-ci.org/airbnb/appear.svg?branch=master)](http://travis-ci.org/airbnb/appear)
+
 ![screenshot demo thing](./screenshot.gif)
 
 Appear is a tool for revealing a given process in your terminal. Given a
