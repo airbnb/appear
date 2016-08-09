@@ -2,9 +2,13 @@
 
 Appear your terminal programs in your gui!
 
-[![Build Status](https://secure.travis-ci.org/airbnb/appear.svg?branch=master)](http://travis-ci.org/airbnb/appear)
+[![GitHub repo](https://badge.fury.io/gh/airbnb%2Fappear.svg)](https://github.com/airbnb/appear) [![Build Status](https://secure.travis-ci.org/airbnb/appear.svg?branch=master)](http://travis-ci.org/airbnb/appear) [![Gem Version](https://badge.fury.io/rb/appear.svg)](https://badge.fury.io/rb/appear)
 
-![screenshot demo thing](./screenshot.gif)
+Docs: [current gem](http://www.rubydoc.info/gems/appear), [github master](http://www.rubydoc.info/github/airbnb/appear/master), your branch: `bundle exec rake doc`
+
+[![screenshot demo thing](./screenshot.gif)](https://github.com/airbnb/appear/raw/master/screenshot.gif)
+<!-- the above screenshot is purposefully broken for YARD docs: it's annoying
+     there, but nice on github :) -->
 
 Appear is a tool for revealing a given process in your terminal. Given a
 process ID, `appear` finds the terminal emulator view (be it a window, tab, or
@@ -99,3 +103,19 @@ config.log_file = '/tmp/my-app-appear.log'
 
 Appear.appear(pid, config)
 ```
+
+## contributing
+
+First, get yourself set up:
+
+1. make sure you have bundler. `gem install bundler`
+2. inside a git clone of the project, run `./scripts/setup` or `bundle install`
+
+Then, submit PRs from feature branches for review:
+
+1. `git checkout -b my-name--my-branch-topic`
+1. write code
+1. run `./scripts/console` for a nice pry session with an instance ready to go
+1. run `bundle exec rake` to run tests and doc coverage
+1. commit and push your changes, however you do
+1. [open a PR against airbnb master](https://github.com/airbnb/appear/compare?expand=1)
