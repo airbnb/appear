@@ -1,14 +1,21 @@
 #!/usr/bin/env ruby
 
+# This script starts a new Pry session with an instance and a config ready to
+# go. You can create a new instance by running the create_appear_instance
+# method at the default scope.
+
 require "bundler/setup"
+require "pry"
 require "appear"
 
-# You can add fixtures and/or initialization code here to make experimenting
-# with your gem easier. You can also use a different console, if you like.
+def create_appear_instance
+  config = Appear::Config.new
+  config.silent = false
+  instance = Appear::Instance.new(config)
+  return [instance, config]
+end
 
-# (If you use this, don't forget to add pry to your Gemfile!)
-# require "pry"
-# Pry.start
+instance, config = create_appear_instance
+puts "generated instance #{instance} from config #{config}"
 
-require "irb"
-IRB.start
+binding.pry
