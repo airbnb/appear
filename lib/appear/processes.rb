@@ -24,7 +24,7 @@ module Appear
 
     def initialize(*args)
       super(*args)
-      @cache = {}
+      @get_info_memo = Memoizer.new
     end
 
     # Get info about a process by PID, including its command and parent_pid.
@@ -32,12 +32,9 @@ module Appear
     # @param pid [Integer]
     # @return [ProcessInfo]
     def get_info(pid)
-      result = @cache[pid]
-      unless result
-        result = fetch_info(pid)
-        @cache[pid] = result
+      @get_info_memo.call(pid) do
+        fetch_info(pid)
       end
-      result
     end
 
     # Is the given process alive?

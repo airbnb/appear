@@ -1,4 +1,5 @@
 require 'appear/service'
+require 'appear/memoizer'
 
 module Appear
   # The LSOF service co-ordinates access to the `lsof` system utility.  LSOF
@@ -34,10 +35,12 @@ module Appear
         @process = process
       end
 
+      # @return [String] the TTY this connection is to
       def tty
         connection.file_name
       end
 
+      # @return [Fixnum] pid of the process making the connection
       def pid
         connection.pid
       end
@@ -45,7 +48,7 @@ module Appear
 
     def initialize(*args)
       super(*args)
-      @cache = {}
+      @lsof_memo = Memoizer.new
     end
 
     # find any intersections where a process in the given tree is present in
@@ -87,62 +90,51 @@ module Appear
       hits.values
     end
 
-    # list connections to files
+    # list connections to files.
     #
     # @param files [Array<String>] files to query
     # @return [Hash<String, Array<Connection>>] map of filename to connections
     def lsofs(files, opts = {})
-      cached = files.select { |f| @cache[f] }
-      uncached = files.reject { |f| @cache[f] }
-
-      result = parallel_lsof(uncached, opts)
-      result.each do |file, data|
-        @cache[file] = data
-      end
-
-      cached.each do |f|
-        result[f] = @cache[f]
-      end
-
-      result
-    end
-
-    private
-
-    # lsof takes a really long time, so parallelize lookups when you can.
-    def parallel_lsof(files, opts = {})
+      mutex = Mutex.new
       results = {}
       threads = files.map do |file|
         Thread.new do
-          results[file] = lsof(file, opts)
+          single_result = lsof(file, opts)
+          mutex.synchronize do
+            results[file] = single_result
+          end
         end
       end
       threads.each { |t| t.join }
       results
     end
 
+    private
+
     def lsof(file, opts = {})
-      pids = opts[:pids]
-      if pids
-        output = run(['lsof', '-ap', pids.join(','), file])
-      else
-        output = run("lsof #{file.shellescape}")
+      @lsof_memo.call(file, opts) do
+        pids = opts[:pids]
+        if pids
+          output = run(['lsof', '-ap', pids.join(','), file])
+        else
+          output = run("lsof #{file.shellescape}")
+        end
+        rows = output.lines.map do |line|
+          command, pid, user, fd, type, device, size, node, name = line.strip.split(/\s+/)
+          Connection.new({
+            command_name: command,
+            pid: pid.to_i,
+            user: user,
+            fd: fd,
+            type: type,
+            device: device,
+            size: size,
+            node: node,
+            file_name: name
+          })
+        end
+        rows[1..-1]
       end
-      rows = output.lines.map do |line|
-        command, pid, user, fd, type, device, size, node, name = line.strip.split(/\s+/)
-        Connection.new({
-          command_name: command,
-          pid: pid.to_i,
-          user: user,
-          fd: fd,
-          type: type,
-          device: device,
-          size: size,
-          node: node,
-          file_name: name
-        })
-      end
-      rows[1..-1]
     rescue Appear::ExecutionFailure
       []
     end
