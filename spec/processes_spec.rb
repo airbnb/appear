@@ -28,7 +28,7 @@ RSpec.describe(Appear::Processes) do
   end
 
   def kill_cat
-    i, o, info = cat
+    *, info = cat
     begin
       Process.kill(9, info.pid)
       # wait for exactly cat_info.pid
