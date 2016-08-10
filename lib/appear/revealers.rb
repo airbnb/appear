@@ -11,6 +11,11 @@ module Appear
   module Revealers
     # extend to implement more revealers
     class BaseRevealer < Service
+      # Reveal `tree` if supported by this revealer. You can get a tree from
+      # {Processes#process_tree}.
+      #
+      # @param tree [Array<ProcessInfo>]
+      # @return [true, nil] return true if we revealed something, otherwise nil
       def call(tree)
         target, *rest = tree
         if supports_tree?(target, rest)
@@ -18,35 +23,60 @@ module Appear
         end
       end
 
-      # TODO
+      # Reveal `tree`. Should be implemented by subclasses.
+      #
+      # @abstract subclasses must implement this method.
+      # @param tree [Array<ProcessInfo>]
+      # @return [true, nil] return true if we revealed something, otherwise nil
       def reveal_tree(tree)
         raise "not implemented"
       end
 
-      # appear the first process in this process tree.
-      # should return nil if no action was performed.
-      # otherwise, return true.
+      # Returns true if this revealer may be able to reveal something in the
+      # tree. For this method, the caller splits the tree into the target and
+      # the rest of the tree, which sometimes simplifies the implementation of
+      # this method.
+      #
+      # @abstract subclasses must implement this method.
+      # @param target [ProcessInfo] bottom (child-most) item in the process
+      #   tree
+      # @param rest [Array<ProcessInfo>] the rest of the tree
+      # @return [Boolean]
       def supports_tree?(target, rest)
         raise "not implemented"
       end
 
+      # Register this class as a revealer so it will be called by
+      # {Instance#call}
       def self.register!
         Appear::REVEALERS.push(self)
       end
     end
 
+    # Base class for Mac-terminal revealers.
     class MacRevealer < BaseRevealer
       delegate :join_via_tty, :lsof
       require_service :mac_os
 
+      # Enumerate the panes (seperate interactive sessions) that this terminal
+      # program has.
+      #
+      # @abstract subclasses must implement this method.
+      # @return [Array<#tty>] any objects with a tty field
       def panes
         raise "not implemented"
       end
 
+      # Reveal a hit. Subclasses must implement this method.
+      #
+      # @abstract subclasses must implement this method.
+      # @param hit [#tty] any object with a tty field
       def reveal_hit(hit)
         raise "not implemented"
       end
 
+      # Implementation.
+      # @see BaseRevealer#reveal_tree
       def reveal_tree(tree)
         hits = join_via_tty(tree, panes)
         actual_hits = hits.uniq {|hit| hit.tty }.
@@ -56,8 +86,14 @@ module Appear
         return actual_hits.length > 0
       end
 
-      # TODO: read the bundle identifier somehow, but this is close enough.
-      # or get the bundle identifier and enhance the process lists with it?
+      # True if the tree has a GUI app with the given name.
+      # Helps when implementing the {#supports_tree?} method.
+      #
+      # @param tree [Array<ProcessInfo>]
+      # @param name [String]
+      # @return [Boolean]
+      # @todo: read the bundle identifier somehow, but this is close enough.
+      #   or get the bundle identifier and enhance the process lists with it?
       def has_gui_app_named?(tree, name)
         tree.any? do |process|
           process.name == name && services.mac_os.has_gui?(process)
@@ -65,6 +101,7 @@ module Appear
       end
     end
 
+    # support for iTerm2
     class Iterm2 < MacRevealer
       require_service :processes
 
@@ -72,6 +109,7 @@ module Appear
         has_gui_app_named?(rest, 'iTerm2')
       end
 
+      # @see MacRevealer#panes
       def panes
         pids = services.processes.pgrep('iTerm2')
         services.mac_os.call_method('iterm2_panes').map do |hash|
@@ -80,18 +118,23 @@ module Appear
         end
       end
 
+      # @see MacRevealer#reveal_hit
       def reveal_hit(hit)
         services.mac_os.call_method('iterm2_reveal_tty', hit.tty)
       end
     end
 
+    # support for Apple's built-in Terminal.app
     class TerminalApp < MacRevealer
       require_service :processes
 
+      # Implementation.
+      # @see BaseRevealer#supports_tree?
       def supports_tree?(target, rest)
         has_gui_app_named?(rest, 'Terminal')
       end
 
+      # @see MacRevealer#panes
       def panes
         pids = services.processes.pgrep('Terminal.app')
         services.mac_os.call_method('terminal_panes').map do |hash|
@@ -100,6 +143,7 @@ module Appear
         end
       end
 
+      # @see MacRevealer#reveal_hit
       def reveal_hit(hit)
         # iterm2 runs a non-gui server process. Because of implementation
         # details of MacOs#has_gui?, we don't *techinically* have to worry
@@ -110,6 +154,8 @@ module Appear
       end
     end
 
+    # support for the cross-platform Tmux multiplexer. Also reveals a connected
+    # tmux client, if possible.
     class Tmux < BaseRevealer
       # TODO: cache services.tmux.panes, services.tmux.clients for this revealer?
       require_service :tmux
@@ -117,10 +163,14 @@ module Appear
       require_service :revealer
       require_service :processes
 
+      # Implementation.
+      # @see BaseRevealer#supports_tree?
       def supports_tree?(target, rest)
         rest.any? { |p| p.name == 'tmux' }
       end
 
+      # Implementation.
+      # @see BaseRevealer#reveal_tree
       def reveal_tree(tree)
         relevent_panes = Join.join(:pid, tree, services.tmux.panes)
         relevent_panes.each do |pane|
@@ -141,6 +191,10 @@ module Appear
       # to find the PID of a tmux client is to lsof() the TTY that the client
       # is connected to, and then deduce the client PID, which will be a tmux
       # process PID that is not the server PID.
+      #
+      # @param tree [Array<ProcessInfo>]
+      # @return [Number, nil] pid of a tmux client, if one was found. Otherwise
+      #   nil.
       def tmux_client_for_tree(tree)
         tmux_server = tree.find {|p| p.name == 'tmux'}
 

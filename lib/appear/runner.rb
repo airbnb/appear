@@ -38,7 +38,11 @@ module Appear
 
   # Records every command run to a directory; intended to be useful for later integration tests.
   class RunnerRecorder < Runner
+    # The location to write recorded runs to. Currently hard-coded to a
+    # location inside the gem's spec folder.
     OUTPUT_DIR = MODULE_DIR.join('spec/command_output')
+
+    # the time that this class file was loaded at
     INIT_AT = Time.new
 
     def initialize(*args)
@@ -46,6 +50,7 @@ module Appear
       @command_runs = Hash.new { |h, k| h[k] = [] }
     end
 
+    # @see Runner#run
     def run(command)
       begin
         result = super(command)
