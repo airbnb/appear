@@ -57,7 +57,7 @@ module Appear
     # Access the given field on an object.
     # Raises an error if the field cannot be accessed.
     #
-    # @param object [Any]
+    # @param obj [Any]
     # @param field [Symbol, String]
     # @return [Any] the value at that field
     def self.access(obj, field)
