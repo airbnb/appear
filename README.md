@@ -55,7 +55,7 @@ GNU Screen support is a non-goal. It's time for screen users to switch to tmux.
 
 ## system requirements
 
- - `ruby` >= 2
+ - `ruby` >= 1.9.3
  - `lsof` command
  - `ps` command
  - `pgrep` command
