@@ -1,24 +1,26 @@
 module Appear
-  # join objects based on hash value or method value.
-  #
-  # example:
-  #
-  # ```
-  # foos = many_foos
-  # bars = many_bars
-  # foo_bars = Join.join(:common_attribute, foos, bars)
-  #
-  # # can still access all the properties on either a foo or a bar
-  # foo_bars.first.common_attribute
-  #
-  # # can access attributes by symbol, too
-  # foo_bars.first[:something_else]
-  # ```
-  #
-  # foo_bars is an array of Join instances. Reads from a foo_bar will read
-  # first from the foo, and then from the bar - this is based on the order of
-  # "tables" passed to Join.join().
+  # Class for joining objects based on hash value or method value.
+  # @see Join.join
   class Join
+    # Join objects or hashes together where thier field values match. This
+    # method is analogous to a JOIN in SQL, althought the behavior is not
+    # exactly the same.
+    #
+    # @example
+    #   foos = many_foos
+    #   bars = many_bars
+    #   foo_bars = Join.join(:common_attribute, foos, bars)
+    #
+    #   # can still access all the properties on either a foo or a bar
+    #   foo_bars.first.common_attribute
+    #
+    #   # can access attributes by symbol, too
+    #   foo_bars.first[:something_else]
+    #
+    # foo_bars is an array of Join instances. Reads from a foo_bar will read
+    # first from the foo, and then from the bar - this is based on the order of
+    # "tables" passed to Join.join().
+    #
     # @param field [Symbol] the method or hash field name to join on.
     # @param tables [Array<Any>] arrays of any sort of object, so long as it is
     #   either a hash, or has a method named `field`.
