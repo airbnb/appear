@@ -11,6 +11,9 @@ module Appear
   class Tmux < Service
     delegate :run, :runner
 
+    # List all the tmux clients on the system
+    #
+    # @return [Array<OpenStruct>]
     def clients
       ipc([
         'list-clients',
@@ -23,6 +26,9 @@ module Appear
       ])
     end
 
+    # List all the tmux panes on the system
+    #
+    # @return [Array<OpenStruct>]
     def panes
       panes = ipc([
         'list-panes',
@@ -46,6 +52,9 @@ module Appear
       panes
     end
 
+    # Reveal a pane in tmux.
+    #
+    # @param pane [OpenStruct] a pane returned from {#panes}
     def reveal_pane(pane)
       ipc(['select-pane', '-t', "#{pane.session}:#{pane.window}.#{pane.pane}"])
       ipc(['select-window', '-t', "#{pane.session}:#{pane.window}"])
