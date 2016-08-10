@@ -1,3 +1,6 @@
+require 'open3'
+require 'shellwords'
+
 # Appear your terminal programs in your gui!
 #
 # Appear is a tool for revealing a given process in your terminal. Given a
@@ -24,6 +27,42 @@ module Appear
     config ||= Appear::Config.new
     instance = Appear::Instance.new(config)
     instance.call(pid)
+  end
+
+  # Build a command string that will execute `appear` with the given config and
+  # arguments. If `appear` is in your PATH, we will use that binary. Otherwise,
+  # we will call the script in ./bin/ folder near this library, which has a
+  # #!/usr/bin/env ruby shbang.
+  #
+  # You may optionally need to prepend "PATH=#{ENV['PATH']} " to the command if
+  # `tmux` is not in your command execution environment's PATH.
+  #
+  # Intended for use with the terminal-notifier gem.
+  # @see https://github.com/julienXX/terminal-notifier/tree/master/Ruby
+  #
+  # @example Show a notification that will raise your program
+  #   require 'appear'
+  #   require 'terminal-notifier'
+  #   TerminalNotifier.notify('Click to appear!', :execute => Appear.build_command(Process.pid))
+  #
+  # @param pid [Number] pid to Appear.
+  # @param config [Appear::Config, nil] a config for adjusting verbosity and logging.
+  # @return [String] a shell command that will execute `appear`
+  def self.build_command(pid, config = nil)
+    binary = `which appear`.strip
+    if binary.empty?
+      binary = Appear::MODULE_DIR.join('bin/appear').to_s
+    end
+
+    command = [binary, pid]
+
+    if config
+      command << '--verbose' unless config.silent
+      command << '--log-file' << config.log_file if config.log_file
+      command << '--record-runs' if config.record_runs
+    end
+
+    command.shelljoin
   end
 end
 
