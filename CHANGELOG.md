@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.1
+
+- passing in a PID was broken.
+
 ## 1.1.0
 
 - You no longer have to pass a PID. If no PID is given, `appear` will default
