@@ -23,15 +23,22 @@ currently only supports macOS.
 ## usage
 
 ```
-Usage: appear [options] PID - appear PID in your user interface
+Usage: appear [OPTION]... [PID]
+Appear PID in your user interface.
+Appear will use the current process PID by default.
+
+Options:
     -l, --log-file [PATH]            log to a file
     -v, --verbose                    tell many tales about how the appear process is going
-        --record-runs                record every executed command as a JSON file
-```
+        --record-runs                record every executed command as a JSON file in the appear spec folder
+        --version                    show version information, then exit
+    -?, -h, --help                   show this help, then exit
 
-Appear will exit 0 if it managed to reveal something.
-Appear will exit 1 if an exception occured.
-Appear will exit 2 if there were no errors, but nothing was revealed.
+Exit status:
+  0  if successfully revealed something,
+  1  if an exception occured,
+  2  if there were no errors, but nothing was revealed.
+```
 
 ## supported terminal emulators
 

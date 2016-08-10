@@ -15,7 +15,12 @@ module Appear
 
     def option_parser
       @option_parser ||= OptionParser.new do |o|
-        o.banner = 'Usage: appear [options] PID - appear PID in your user interface'
+        o.banner =  'Usage: appear [OPTION]... [PID]'
+        o.separator 'Appear PID in your user interface.'
+        o.separator 'Appear will use the current process PID by default.'
+        o.separator ''
+        o.separator 'Options:'
+
         o.on('-l', '--log-file [PATH]', 'log to a file') do |file|
           @config.log_file = file
         end
@@ -24,23 +29,44 @@ module Appear
           @config.silent = false if flag
         end
 
-        o.on('--record-runs', 'record every executed command as a JSON file') do |flag|
+        o.on('--record-runs', 'record every executed command as a JSON file in the appear spec folder') do |flag|
           @config.record_runs = flag
         end
+
+        o.on('--version', 'show version information, then exit') do
+          puts "appear #{Appear::VERSION}"
+          puts "  author: Jake Teton-Landis"
+          puts "  repo: https://github.com/airbnb/appear"
+          exit 2
+        end
+
+        o.on('-?', '-h', '--help', 'show this help, then exit') do
+          puts o
+          exit 2
+        end
+
+        o.separator ''
+        o.separator 'Exit status:'
+        o.separator '  0  if successfully revealed something,'
+        o.separator '  1  if an exception occured,'
+        o.separator '  2  if there were no errors, but nothing was revealed.'
       end
     end
 
+    # @param all_args [Array<String>] something like ARGV
     def execute(all_args)
-      argv = option_parser.parse!(all_args)
+      argv = option_parser.parse(*all_args)
 
-      pid = argv[0].to_i
-      if pid == 0
-        raise InvalidPidError.new("Invalid PID #{argv[0].inspect} given (parsed to 0).")
+      pid = Integer(argv[0] || Process.pid, 10)
+
+      start_message = "STARTING. pid: #{pid}"
+      if argv.empty?
+        start_message += " (current process pid)"
       end
 
       start = Time.now
       revealer = Appear::Instance.new(@config)
-      revealer.log("STARTING. pid: #{pid}")
+      revealer.log(start_message)
       result = revealer.call(pid)
       finish = Time.now
       revealer.log("DONE. total time: #{finish - start} seconds, success: #{result}")
