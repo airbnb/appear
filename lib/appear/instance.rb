@@ -11,9 +11,6 @@ require 'appear/tmux'
 require 'appear/revealers'
 
 module Appear
-  class CannotRevealError < Error; end
-  class NoGuiError < CannotRevealError; end
-
   # Instance is the main class in Appear. It constructs all the other services
   # and co-ordinates the actual revealing process.
   class Instance < Service
@@ -40,6 +37,10 @@ module Appear
       super(@all_services)
     end
 
+    # appear the given PID.
+    #
+    # @param pid [Number] process id
+    # @return [Boolean] true if we revealed something, false otherwise.
     def call(pid)
       tree = process_tree(pid)
 

@@ -21,7 +21,7 @@ module Appear
   class Join
     # @param field [Symbol] the method or hash field name to join on.
     # @param tables [Array<Any>] arrays of any sort of object, so long as it is
-    # either a hash, or implements the given field.
+    #   either a hash, or has a method named `field`.
     # @return [Array<Join>]
     def self.join(field, *tables)
       by_field = Hash.new { |h, k| h[k] = self.new }
@@ -39,6 +39,12 @@ module Appear
       end
     end
 
+    # True if we can access the given field on an object, either by calling
+    # that method on the object, or by accessing using []
+    #
+    # @param obj [Any]
+    # @param field [Symbol, String]
+    # @return [Boolean]
     def self.can_access?(obj, field)
       if obj.respond_to?(field)
         return true
@@ -48,6 +54,12 @@ module Appear
       return false
     end
 
+    # Access the given field on an object.
+    # Raises an error if the field cannot be accessed.
+    #
+    # @param object [Any]
+    # @param field [Symbol, String]
+    # @return [Any] the value at that field
     def self.access(obj, field)
       if obj.respond_to?(field)
         obj.send(field)
@@ -58,21 +70,34 @@ module Appear
       end
     end
 
-    # an instance of Join is a joined object containing all the data in all its
-    # parts. Joins are read from left to right, returning the first non-nil
-    # value encountered.
+    # A Join is a union of data objects. You can use a Join to group objects of
+    # different types, so that you may read from whichever has a given field.
+    #
+    # It is more useful to use self.join to perform a join operation on
+    # collections than to create Join objects directly.
     def initialize(*objs)
       @objs = objs
     end
 
-    def push!(obj, note = nil)
+    # add another data object to this join.
+    #
+    # @param obj [Any]
+    def push!(obj)
       @objs << obj
     end
 
+    # get the number of objects in this join
+    #
+    # @return [Fixnum]
     def joined_count
       @objs.length
     end
 
+    # read a field from the join. Returns the first non-nil value we can read.
+    # @see self.access for information about how fields are accessed.
+    #
+    # @param sym [String, Symbol] the field name
+    # @return [Any, nil]
     def [](sym)
       result = nil
 
@@ -86,6 +111,12 @@ module Appear
       result
     end
 
+    # the {#method_missing} implementation on a Join allows you to access valid
+    # fields with regular accessors.
+    #
+    # @param method [String, Symbol]
+    # @param args [Array<Any>] should have none
+    # @param block [Proc] should have none
     def method_missing(method, *args, &block)
       raise NoMethodError.new("Cannot access #{method.inspect}") unless respond_to?(method)
       raise ArgumentError.new("Passed args to accessor") if args.length > 0
@@ -93,6 +124,9 @@ module Appear
       self[method]
     end
 
+    # @param sym [String, Symbol] name of the method
+    # @param priv [Boolean] default false
+    # @return [Boolean] true if we can respond to the given method name
     def respond_to?(sym, priv = false)
       super(sym, priv) || (@objs.any? { |o| self.class.can_access?(o, sym) })
     end

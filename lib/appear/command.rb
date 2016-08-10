@@ -4,8 +4,6 @@ require 'appear/instance'
 require 'optparse'
 
 module Appear
-  class InvalidPidError < Error; end
-
   # Entrypoint and manager for the command-line `appear` tool.
   class Command
     def initialize
@@ -13,6 +11,9 @@ module Appear
       @config.silent = true
     end
 
+    # The ui for our command.
+    #
+    # @return [OptionParser]
     def option_parser
       @option_parser ||= OptionParser.new do |o|
         o.banner =  'Usage: appear [OPTION]... [PID]'
@@ -53,6 +54,8 @@ module Appear
       end
     end
 
+    # Execute the command. Will exit(3) with a status; does not return.
+    #
     # @param all_args [Array<String>] something like ARGV
     def execute(all_args)
       argv = option_parser.parse(*all_args)
