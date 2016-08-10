@@ -14,7 +14,7 @@ module Appear
       # Reveal `tree` if supported by this revealer. You can get a tree from
       # {Processes#process_tree}.
       #
-      # @param tree [Array<ProcessInfo>]
+      # @param tree [Array<Processes::ProcessInfo>]
       # @return [true, nil] return true if we revealed something, otherwise nil
       def call(tree)
         target, *rest = tree
@@ -26,7 +26,7 @@ module Appear
       # Reveal `tree`. Should be implemented by subclasses.
       #
       # @abstract subclasses must implement this method.
-      # @param tree [Array<ProcessInfo>]
+      # @param tree [Array<Processes::ProcessInfo>]
       # @return [true, nil] return true if we revealed something, otherwise nil
       def reveal_tree(tree)
         raise "not implemented"
@@ -38,9 +38,9 @@ module Appear
       # this method.
       #
       # @abstract subclasses must implement this method.
-      # @param target [ProcessInfo] bottom (child-most) item in the process
+      # @param target [Processes::ProcessInfo] bottom (child-most) item in the process
       #   tree
-      # @param rest [Array<ProcessInfo>] the rest of the tree
+      # @param rest [Array<Processes::ProcessInfo>] the rest of the tree
       # @return [Boolean]
       def supports_tree?(target, rest)
         raise "not implemented"
@@ -89,7 +89,7 @@ module Appear
       # True if the tree has a GUI app with the given name.
       # Helps when implementing the {#supports_tree?} method.
       #
-      # @param tree [Array<ProcessInfo>]
+      # @param tree [Array<Processes::ProcessInfo>]
       # @param name [String]
       # @return [Boolean]
       # @todo: read the bundle identifier somehow, but this is close enough.
@@ -192,7 +192,7 @@ module Appear
       # is connected to, and then deduce the client PID, which will be a tmux
       # process PID that is not the server PID.
       #
-      # @param tree [Array<ProcessInfo>]
+      # @param tree [Array<Processes::ProcessInfo>]
       # @return [Number, nil] pid of a tmux client, if one was found. Otherwise
       #   nil.
       def tmux_client_for_tree(tree)
