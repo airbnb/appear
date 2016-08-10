@@ -40,10 +40,10 @@ module Appear
 
       start = Time.now
       revealer = Appear::Instance.new(@config)
-      revealer.output("STARTING. pid: #{pid}")
+      revealer.log("STARTING. pid: #{pid}")
       result = revealer.call(pid)
       finish = Time.now
-      revealer.output("DONE. total time: #{finish - start} seconds, success: #{result}")
+      revealer.log("DONE. total time: #{finish - start} seconds, success: #{result}")
 
       if result
         # success! revealed something!
