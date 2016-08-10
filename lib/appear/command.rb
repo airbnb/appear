@@ -60,11 +60,12 @@ module Appear
     def execute(all_args)
       argv = option_parser.parse(*all_args)
 
-      pid = Integer(argv[0] || Process.pid, 10)
-
-      start_message = "STARTING. pid: #{pid}"
       if argv.empty?
-        start_message += " (current process pid)"
+        pid = Process.pid
+        start_message = "STARTING. pid: #{pid} (current process pid)"
+      else
+        pid = Integer(argv[0])
+        start_message = "STARTING. pid: #{pid}"
       end
 
       start = Time.now
