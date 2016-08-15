@@ -1,5 +1,6 @@
 require 'ostruct'
 require 'appear/service'
+require 'appear/util/command_builder'
 
 module Appear
   # The Tmux service is in charge of interacting with `tmux` processes. It is
@@ -15,33 +16,25 @@ module Appear
     #
     # @return [Array<OpenStruct>]
     def clients
-      ipc([
-        'list-clients',
-        '-F',
-        format_string(
+      ipc(command('list-clients').flags(:F => format_string(
           :tty => :client_tty,
           :term => :client_termname,
           :session => :client_session
-      ),
-      ])
+      )))
     end
 
     # List all the tmux panes on the system
     #
     # @return [Array<OpenStruct>]
     def panes
-      panes = ipc([
-        'list-panes',
-        '-a',
-        '-F',
-        format_string(
-          :pid => :pane_pid,
-          :session => :session_name,
-          :window => :window_index,
-          :pane => :pane_index,
-          :command_name => :pane_current_command,
-          :active => :pane_active)
-      ])
+      panes = ipc(command('list-panes').flags(:a => true, :F => format_string(
+        :pid => :pane_pid,
+        :session => :session_name,
+        :window => :window_index,
+        :pane => :pane_index,
+        :command_name => :pane_current_command,
+        :active => :pane_active
+      )))
 
       panes.each do |pane|
         pane.window = pane.window.to_i
@@ -56,14 +49,18 @@ module Appear
     #
     # @param pane [OpenStruct] a pane returned from {#panes}
     def reveal_pane(pane)
-      ipc(['select-pane', '-t', "#{pane.session}:#{pane.window}.#{pane.pane}"])
-      ipc(['select-window', '-t', "#{pane.session}:#{pane.window}"])
+      ipc(command('select-pane').flags(:t => "#{pane.session}:#{pane.window}.#{pane.pane}"))
+      ipc(command('select-window').flags(:t => "#{pane.session}:#{pane.window}"))
     end
 
     private
 
-    def ipc(args)
-      res = run(['tmux'] + args)
+    def command(subcommand)
+      Appear::Util::CommandBuilder.new(['tmux', subcommand])
+    end
+
+    def ipc(cmd)
+      res = run(cmd.to_a)
       res.lines.map do |line|
         info = {}
         line.strip.split(' ').each do |pair|
