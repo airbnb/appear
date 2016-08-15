@@ -1,3 +1,6 @@
+require 'shellwords'
+require 'appear/util/command_builder'
+
 module Appear
   # Appear::Editor is a sub-library of Appear, for appearing files, instead of
   # processes. Appear::Editor's job is to open a given file in an existing
@@ -12,6 +15,17 @@ module Appear
   #
   # [nvr]: https://github.com/mhinz/neovim-remote
   module Editor
+
+    # Wraps nvim-remote to implement basoc nvim support.
+    # @see https://www.facebook.com/events/1571719799798071/
+    class Nvim
+      COMMAND = 'nvr'
+
+      def command
+        CommandBuilder.new(COMMAND)
+      end
+    end
+
     class TmuxIde < Appear::Editor
       # @return [Appear::Editor::Nvim, nil] an nvim editor session suitable for
       #   opeing files, or nil if nvim isn't running or there are no suitable sessions.
@@ -19,6 +33,10 @@ module Appear
         raise NotImplemented
       end
 
+      # find the tmux pane holding an nvim editor instance.
+      #
+      # @param nvim [Appear::Editor::Nvim]
+      # @return [Appear::Tmux::Pane, nil] the pane, or nil if not found
       def find_tmux_pane(nvim)
         tree = services.processes.process_tree(nvim.pid)
         tmux_server = tree.find { |p| p.name == 'tmux' }
@@ -37,6 +55,9 @@ module Appear
         end
       end
 
+      # Find or create an IDE, then open this file in it.
+      #
+      # @param filename [String]
       def find_or_create_ide(filename)
         # remember that this can be nil
         nvim = find_nvim
