@@ -6,11 +6,16 @@ module Appear
     def initialize
       @cache = {}
       @cache_mutex = Mutex.new
+      @disable = false
     end
 
     # Memoize the call to a block. Any arguments given to this method will be
     # passed to the given block.
     def call(*args)
+      if @disable
+        return yield(*args)
+      end
+
       raise ArgumentError.new('no block given') unless block_given?
       @cache_mutex.synchronize do
         return @cache[args] if @cache.key?(args)
@@ -24,11 +29,19 @@ module Appear
     end
 
     # Evict the cache
+    # @return [self]
     def clear!
       @cache_mutex.synchronize do
         @cache = {}
       end
-      nil
+      self
+    end
+
+    # Disable memoization permanently on this instance.
+    # @return [self]
+    def disable!
+      @disable = true
+      self
     end
   end
 end
