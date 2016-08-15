@@ -21,7 +21,15 @@ module Appear
     # either be a string, or an array of command name and parameters.
     # Returns the combinded STDERR and STDOUT of the command.
     #
-    # @return String
+    # @param command [String, Array] command to run, as an argv array, or as a
+    #   sh command string.
+    # @param opts [Hash] options
+    # @option opts [Boolean] :allow_failure (false) permit running the command
+    #   to fail. Do not raise an ExecutionFailure error.
+    #
+    # @raise [ExecutionFailure] if the command exists non-zero
+    #
+    # @return [String]
     def run(command, opts = {})
       allow_failure = opts[:allow_failure] || false
       start = Time.new
