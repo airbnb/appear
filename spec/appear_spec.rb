@@ -35,7 +35,7 @@ RSpec.describe Appear do
       config = Appear::Config.new
       config.silent = false
       config.log_file = 'foo'
-      expect(subject.build_command(1, config)).to match(/appear 1 --verbose --log-file foo$/)
+      expect(subject.build_command(1, config)).to match(/appear --verbose --log-file foo 1$/)
     end
   end
 end

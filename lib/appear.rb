@@ -54,17 +54,18 @@ module Appear
       binary = Appear::MODULE_DIR.join('bin/appear').to_s
     end
 
-    command = [binary, pid]
+    command = Appear::Util::CommandBuilder.new(binary).args(pid)
 
     if config
-      command << '--verbose' unless config.silent
-      command << '--log-file' << config.log_file if config.log_file
-      command << '--record-runs' if config.record_runs
+      command.flag('verbose', true) unless config.silent
+      command.flag('log-file', config.log_file) if config.log_file
+      command.flag('record-runs', true) if config.record_runs
     end
 
-    command.shelljoin
+    command.to_s
   end
 end
 
 require 'appear/config'
 require 'appear/instance'
+require 'appear/util/command_builder'
