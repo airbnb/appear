@@ -10,6 +10,9 @@ module Appear
     # @param log_file_name [String, nil] if a string, log to the file at this path
     # @param silent [Boolean] if true, output to STDERR
     def initialize(log_file_name, silent)
+      @file_logger = nil
+      @stderr_logger = nil
+
       @file_logger = Logger.new(log_file_name.to_s) if log_file_name
       @stderr_logger = Logger.new(STDERR) unless silent
     end
