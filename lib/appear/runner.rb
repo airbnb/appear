@@ -56,12 +56,16 @@ module Appear
     # @see Runner#run
     def run(command, opts = {})
       begin
-        result = super(command, opts)
+        result = super(command)
         record_success(command, result)
         return result
       rescue ExecutionFailure => err
         record_error(command, err)
-        raise err
+        if opts[:allow_failure]
+          return err.output
+        else
+          raise err
+        end
       end
     end
 
