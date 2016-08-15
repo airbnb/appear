@@ -2,6 +2,10 @@ require 'appear/service'
 require 'appear/memoizer'
 
 module Appear
+  # raised if we can't parse a connection from an output line of the `lsof`
+  # command.
+  class LsofParseError < Appear::Error; end
+
   # The LSOF service co-ordinates access to the `lsof` system utility.  LSOF
   # stands for "list open files". It can read the "connections" various
   # programs have to a given file, eg, what programs have a file descriptor for
@@ -17,6 +21,7 @@ module Appear
       attr_accessor :command_name, :pid, :user, :fd, :type, :device, :size, :node, :name, :file_name
       def initialize(hash)
         hash.each do |key, value|
+          raise LsofParseError.new("attr #{key.inspect} is nil") if value.nil?
           send("#{key}=", value)
         end
       end
@@ -112,14 +117,17 @@ module Appear
     private
 
     def lsof(file, opts = {})
+      error_line = nil
       @lsof_memo.call(file, opts) do
         pids = opts[:pids]
         if pids
-          output = run(['lsof', '-ap', pids.join(','), file])
+          output = run(['lsof', '-ap', pids.join(','), file], :allow_failure => true)
         else
-          output = run("lsof #{file.shellescape}")
+          output = run(['lsof', file], :allow_failure => true)
         end
+        next [] if output.empty?
         rows = output.lines.map do |line|
+          error_line = line
           command, pid, user, fd, type, device, size, node, name = line.strip.split(/\s+/)
           Connection.new({
             command_name: command,
@@ -135,7 +143,8 @@ module Appear
         end
         rows[1..-1]
       end
-    rescue Appear::ExecutionFailure
+    rescue LsofParseError => err
+      log("lsof: parse error: #{err}, line: #{error_line}")
       []
     end
   end
