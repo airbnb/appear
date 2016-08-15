@@ -22,7 +22,8 @@ module Appear
     # Returns the combinded STDERR and STDOUT of the command.
     #
     # @return String
-    def run(command)
+    def run(command, opts = {})
+      allow_failure = opts[:allow_failure] || false
       start = Time.new
       if command.is_a? Array
         output, status = Open3.capture2e(*command)
@@ -31,7 +32,9 @@ module Appear
       end
       finish = Time.new
       log("Runner: ran #{command.inspect} in #{finish - start}s")
-      raise ExecutionFailure.new(command, output) unless status.success?
+      if !status.success? && !allow_failure
+        raise ExecutionFailure.new(command, output)
+      end
       output
     end
   end
@@ -51,9 +54,9 @@ module Appear
     end
 
     # @see Runner#run
-    def run(command)
+    def run(command, opts = {})
       begin
-        result = super(command)
+        result = super(command, opts)
         record_success(command, result)
         return result
       rescue ExecutionFailure => err
