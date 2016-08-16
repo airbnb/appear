@@ -1,5 +1,5 @@
 {
-  "command": "lsof /dev/ttys005",
+  "command": ["lsof", "/dev/ttys005"],
   "output": "COMMAND  PID              USER   FD   TYPE DEVICE SIZE/OFF NODE NAME\ntmux    6846 jake_teton-landis   14u   CHR   16,5 0t964606  651 /dev/ttys005\nzsh     8346 jake_teton-landis    0u   CHR   16,5 0t964606  651 /dev/ttys005\nzsh     8346 jake_teton-landis    1u   CHR   16,5 0t964606  651 /dev/ttys005\nzsh     8346 jake_teton-landis    2u   CHR   16,5 0t964606  651 /dev/ttys005\nzsh     8346 jake_teton-landis   10u   CHR   16,5    0t393  651 /dev/ttys005\ntmux    8606 jake_teton-landis    0u   CHR   16,5 0t964606  651 /dev/ttys005\ntmux    8606 jake_teton-landis    1u   CHR   16,5 0t964606  651 /dev/ttys005\ntmux    8606 jake_teton-landis    2u   CHR   16,5 0t964606  651 /dev/ttys005\n",
   "status": "success",
   "run_index": 0,

@@ -13,7 +13,7 @@ module AppearMocks
   end
 
   class Runner < Service
-    def run(command); end
+    def run(command, opts = {}); end
   end
 
   class Output < Service
@@ -29,9 +29,9 @@ module AppearMocks
       @current_index = Hash.new { |h, k| h[k] = 0 }
     end
 
-    def run(command)
+    def run(command, opts = {})
       output = get_next(command)
-      if output['status'] == 'success'
+      if output['status'] == 'success' || opts[:allow_failure]
         return output['output']
       else
         raise Appear::ExecutionFailure.new(command, output['output'])

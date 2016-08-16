@@ -21,8 +21,17 @@ module Appear
     # either be a string, or an array of command name and parameters.
     # Returns the combinded STDERR and STDOUT of the command.
     #
-    # @return String
-    def run(command)
+    # @param command [String, Array] command to run, as an argv array, or as a
+    #   sh command string.
+    # @param opts [Hash] options
+    # @option opts [Boolean] :allow_failure (false) permit running the command
+    #   to fail. Do not raise an ExecutionFailure error.
+    #
+    # @raise [ExecutionFailure] if the command exists non-zero
+    #
+    # @return [String]
+    def run(command, opts = {})
+      allow_failure = opts[:allow_failure] || false
       start = Time.new
       if command.is_a? Array
         output, status = Open3.capture2e(*command)
@@ -31,7 +40,9 @@ module Appear
       end
       finish = Time.new
       log("Runner: ran #{command.inspect} in #{finish - start}s")
-      raise ExecutionFailure.new(command, output) unless status.success?
+      if !status.success? && !allow_failure
+        raise ExecutionFailure.new(command, output)
+      end
       output
     end
   end
@@ -51,14 +62,18 @@ module Appear
     end
 
     # @see Runner#run
-    def run(command)
+    def run(command, opts = {})
       begin
         result = super(command)
         record_success(command, result)
         return result
       rescue ExecutionFailure => err
         record_error(command, err)
-        raise err
+        if opts[:allow_failure]
+          return err.output
+        else
+          raise err
+        end
       end
     end
 

@@ -221,11 +221,15 @@ module Appear
           [tty_of_client],
           :pids => services.processes.pgrep('tmux')
         )[tty_of_client]
+
         client_connection = connections_to_tty.find do |conn|
           (conn.command_name =~ /^tmux/) && (conn.pid != tmux_server.pid)
         end
 
-        client_connection.pid if client_connection
+        if client_connection
+          log("tmux_client_for_tree: found client pid=#{client_connection.pid} for tree pid=#{tree.first.pid}")
+          return client_connection.pid
+        end
       end
     end
 
