@@ -86,6 +86,13 @@ module Appear
         to_a.shelljoin
       end
 
+      def dup
+        opts = @options.dup
+        opts[:argv] = @argv.dup
+        opts[:flags] = @flags.dup
+        self.class.new(@command.dup, opts)
+      end
+
       private
 
       # @param flag [#to_s]
