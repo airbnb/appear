@@ -14,6 +14,17 @@ module Appear
   #
   # [nvr]: https://github.com/mhinz/neovim-remote
   module Editor
+    # TmuxIde is an editor that treasts a collection of Tmux splits holding an
+    # Nvim process as an IDE. A "session" is a Tmux window that at least
+    # contains an Nvim instance, although new sessions are split like this:
+    # -------------
+    # |           |
+    # |   nvim    |
+    # |           |
+    # |-----------|
+    # |$    |$    |
+    # |     |     |
+    # |-----------|
     class TmuxIde
       # @return [Appear::Editor::Nvim, nil] an nvim editor session suitable for
       #   opeing files, or nil if nvim isn't running or there are no suitable sessions.
@@ -72,6 +83,9 @@ module Appear
         return nvim, pane
       end
 
+      # Create a new IDE instance editing `filename`
+      #
+      # @param filename [String]
       def create_ide(filename)
         tmux_session = services.tmux.sessions.first
         dir = project_root(filename)
@@ -111,6 +125,9 @@ module Appear
         return find_nvim(filename), top_pane
       end
 
+      # reveal a file in an existing or new IDE session
+      #
+      # @param filename [String]
       def call(filename)
         nvim, pane = find_or_create_ide(filename)
 

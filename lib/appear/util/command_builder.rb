@@ -5,7 +5,6 @@ module Appear
     #   tmux_panes = CommandBuilder.new(%w(tmux list-panes)).
     #     flags(:a => true, :F => '#{session_name} #{pane_index}')
     #   services.runner.run(tmux_panes.to_a)
-    #
     class CommandBuilder
       # @param command [#to_s, Array<#to_s>] the command. Use an array if you
       #   need multiple words before we start listing arguments, eg %w(vagrant
@@ -86,6 +85,9 @@ module Appear
         to_a.shelljoin
       end
 
+      # Duplicate this command builder
+      #
+      # @return [CommandBuilder]
       def dup
         opts = @options.dup
         opts[:argv] = @argv.dup

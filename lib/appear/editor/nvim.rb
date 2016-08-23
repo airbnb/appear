@@ -26,7 +26,11 @@ module Appear
     # stuff to manage 'em, but overall this solves needing command a bunch of
     # different things.
     class Nvim < Service
-      COMMAND = 'nvr'
+      # the `neovim-remote` command name
+      COMMAND = 'nvr'.freeze
+
+      # the value to use for Vim buffers with no name. This is the UI value
+      # that Vim usually shows.
       NO_NAME = "[No Name]".freeze
 
       # value class describing a vim pane.
@@ -231,17 +235,17 @@ module Appear
           loc = loc.strip.split(' ').last.to_i if loc
           {
             # vim buffer number
-            # @type [Fixnum]
+            # @return [Fixnum]
             buffer: num,
             # short name of buffer
-            # @type [String]
+            # @return [String]
             name: name,
             # TODO: analyze this. A string of characters that indicates various
             # things about the buffer.
-            # @type [String]
+            # @return [String]
             bits: bits,
             # what line the cursor is on
-            # @type [Fixnum]
+            # @return [Fixnum]
             line: loc
           }
         end
