@@ -1,4 +1,5 @@
 require 'appear/util/command_builder'
+require 'appear/util/join'
 
 module Appear
   # Appear::Editor is a sub-library of Appear, for appearing files, instead of
@@ -43,7 +44,7 @@ module Appear
 
         # the first join should be the tmux pane holding our
         # nvim session.
-        proc_and_panes = Join.join(:pid, services.tmux.panes, tree)
+        proc_and_panes = Util::Join.join(:pid, services.tmux.panes, tree)
         pane_join = proc_and_panes.first
         return nil unless pane_join
 

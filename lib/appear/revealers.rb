@@ -1,5 +1,5 @@
 require 'appear/service'
-require 'appear/join'
+require 'appear/util/join'
 require 'ostruct'
 
 module Appear
@@ -173,7 +173,7 @@ module Appear
       # Implementation.
       # @see BaseRevealer#reveal_tree
       def reveal_tree(tree)
-        relevent_panes = Join.join(:pid, tree, services.tmux.panes)
+        relevent_panes = Util::Join.join(:pid, tree, services.tmux.panes)
         relevent_panes.each do |pane|
           log("#{self.class.name}: revealing pane #{pane}")
           services.tmux.reveal_pane(pane)
@@ -200,13 +200,13 @@ module Appear
         tmux_server = tree.find {|p| p.name == 'tmux'}
 
         # join processes on tmux panes by PID.
-        proc_and_panes = Join.join(:pid, services.tmux.panes, tree)
+        proc_and_panes = Util::Join.join(:pid, services.tmux.panes, tree)
 
         # Join the list of tmux clients with process_and_pid on :session.
         # In tmux, every pane is addressed by session_name:window_index:pane_index.
         # This gives us back a list of all the clients that have a pane that
         # contains a process in our given process tree.
-        proc_and_clients = Join.join(:session, services.tmux.clients, proc_and_panes)
+        proc_and_clients = Util::Join.join(:session, services.tmux.clients, proc_and_panes)
 
         # there *should* be only one of these, unless there are two clients
         # connected to the same tmux session. In that case we just choose one
