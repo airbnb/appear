@@ -1,5 +1,6 @@
 require 'appear/constants'
 require 'appear/service'
+require 'appear/util/memoizer'
 
 module Appear
   # Raised if Processes tries to get info for a dead process, or a PID that is
@@ -24,7 +25,7 @@ module Appear
 
     def initialize(*args)
       super(*args)
-      @get_info_memo = Memoizer.new
+      @get_info_memo = Util::Memoizer.new
     end
 
     # Get info about a process by PID, including its command and parent_pid.

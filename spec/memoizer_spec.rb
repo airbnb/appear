@@ -1,5 +1,5 @@
-require 'appear/memoizer'
-RSpec.describe Appear::Memoizer do
+require 'appear/util/memoizer'
+RSpec.describe Appear::Util::Memoizer do
   describe '#call' do
     it 'memoizes calls with the same arguments' do
       value = 0

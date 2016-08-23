@@ -1,5 +1,5 @@
 require 'appear/service'
-require 'appear/memoizer'
+require 'appear/util/memoizer'
 require 'appear/util/value_class'
 
 module Appear
@@ -73,7 +73,7 @@ module Appear
 
     def initialize(*args)
       super(*args)
-      @lsof_memo = Memoizer.new
+      @lsof_memo = Util::Memoizer.new
     end
 
     # find any intersections where a process in the given tree is present in
