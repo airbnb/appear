@@ -68,7 +68,7 @@ module Appear
       elsif obj.respond_to?(:[])
         obj[field]
       else
-        raise "cannot access #{field.inspect} on #{object.inspect}"
+        raise "cannot access #{field.inspect} on #{obj.inspect}"
       end
     end
 
@@ -93,6 +93,12 @@ module Appear
     # @return [Fixnum]
     def joined_count
       @objs.length
+    end
+
+    # Return the first member in the join that matches the given block.
+    # @yield [Object] join member.
+    def unjoin(&block)
+      @objs.find(&block)
     end
 
     # read a field from the join. Returns the first non-nil value we can read.
