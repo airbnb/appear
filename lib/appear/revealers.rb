@@ -1,5 +1,6 @@
 require 'appear/service'
 require 'appear/join'
+require 'ostruct'
 
 module Appear
   # stores all the ways we can appear something

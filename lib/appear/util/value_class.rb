@@ -33,7 +33,7 @@ module Appear
           @values
         end
       end
-
     end
+
   end
 end
