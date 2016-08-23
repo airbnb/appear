@@ -1,4 +1,5 @@
 require 'appear/util/command_builder'
+require 'appear/util/value_class'
 require 'yaml'
 require 'pathname'
 
@@ -34,7 +35,7 @@ module Appear
       NO_NAME = "[No Name]".freeze
 
       # value class describing a vim pane.
-      class Pane
+      class Pane < Util::ValueClass
         # @return [Fixnum] vim tab number
         attr_reader :tab
 
@@ -46,13 +47,6 @@ module Appear
 
         # @return [Hash<Symbol, String>] data about the buffer
         attr_reader :buffer_info
-
-        def initialize(opts = {})
-          @tab = opts.fetch(:tab)
-          @window = opts.fetch(:window)
-          @buffer = opts.fetch(:buffer)
-          @buffer_info = opts.fetch(:buffer_info)
-        end
       end
 
       delegate :run, :runner
@@ -106,9 +100,9 @@ module Appear
       # evaluate a Vimscript expression
       #
       # @param vimstring [String] the expression, eg "fnamemodify('~', ':p')"
-      # @return [String]
+      # @return [Object] expression result, parsed as YAML.
       def expr(vimstring)
-        run(command.flag('remote-expr', vimstring).to_a)
+        parse_output_as_yaml(run(command.flag('remote-expr', vimstring).to_a))
       end
 
       # Perform a Vim command
@@ -122,14 +116,14 @@ module Appear
       #
       # @return [Fixnum]
       def pid
-        expr('getpid()').strip.to_i
+        expr('getpid()')
       end
 
       # Working directory of the remote vim session
       #
       # @return [Pathname]
       def cwd
-        Pathname.new(expr('getcwd()').strip)
+        expr('getcwd()')
       end
 
       # Open a file for editing in a new tab
@@ -191,9 +185,7 @@ module Appear
       end
 
       def get_windows
-        parse_output_as_yaml(
-          expr(%Q[map( range(1, tabpagenr('$')), "tabpagebuflist(v:val)" )]).strip
-        )
+        expr(%Q[map( range(1, tabpagenr('$')), "tabpagebuflist(v:val)" )])
       end
 
       def get_buffers
@@ -201,7 +193,7 @@ module Appear
           "fnamemodify(bufname(v:val), '#{BUFFER_FILENAME_EXPANSIONS[type]}')"
         end.join(', ')
 
-        as_a = parse_output_as_yaml(expr(%Q(map( range(1, bufnr('$')), "[v:val, #{cmd} ]" ))))
+        as_a = expr(%Q(map( range(1, bufnr('$')), "[v:val, #{cmd} ]" )))
         as_a.map do |row|
           buf = {:buffer => row.shift}
           row.each_with_index do |it, i|
@@ -209,45 +201,6 @@ module Appear
           end
           buf[:name] = NO_NAME if buf[:name].empty?
           buf
-        end
-      end
-
-      # Run and parse the :buffers Vim command.
-      # this is a little weird - sometimes the screen flashes briefly as the
-      # command is run, execution seems slow, and the parsing is non-trivial.
-      # @return [Array<Hash>]
-      def buffers_output
-        # redirect command output to the variable "appear_buflist_var"
-        cmd("redir => appear_buflist_var")
-        # run the buffers command - the `!` means get all buffers, not just the listed ones
-        cmd("buffers!")
-        # end redirecting command output
-        cmd("redir END")
-        # finally, read out our variable
-        output = expr('appear_buflist_var')
-
-        # parsing
-        output.split("\n").reject(&:empty?).map do |line|
-          bits, *name, loc = line.split('"')
-          num = bits.match(/\d+/)
-          num = num[0].to_i if num
-          name = name.join('"')
-          loc = loc.strip.split(' ').last.to_i if loc
-          {
-            # vim buffer number
-            # @return [Fixnum]
-            buffer: num,
-            # short name of buffer
-            # @return [String]
-            name: name,
-            # TODO: analyze this. A string of characters that indicates various
-            # things about the buffer.
-            # @return [String]
-            bits: bits,
-            # what line the cursor is on
-            # @return [Fixnum]
-            line: loc
-          }
         end
       end
 
