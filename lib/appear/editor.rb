@@ -26,11 +26,18 @@ module Appear
     # |$    |$    |
     # |     |     |
     # |-----------|
-    class TmuxIde
+    class TmuxIde < Service
+
+      require_service :processes
+      require_service :tmux
+      require_service :runner # needed for sub-services
+
       # @return [Appear::Editor::Nvim, nil] an nvim editor session suitable for
       #   opeing files, or nil if nvim isn't running or there are no suitable sessions.
-      def find_nvim
-        raise NotImplemented
+      def find_nvim(filename)
+        res = ::Appear::Editor::Nvim.find_for_file(filename, services)
+        log("nvim for file #{filename.inspect}: #{res.inspect}")
+        res
       end
 
       # find the tmux pane holding an nvim editor instance.
@@ -40,7 +47,7 @@ module Appear
       def find_tmux_pane(nvim)
         tree = services.processes.process_tree(nvim.pid)
         tmux_server = tree.find { |p| p.name == 'tmux' }
-        return nil unless tmux
+        return nil unless tmux_server
 
         # the first join should be the tmux pane holding our
         # nvim session.
@@ -69,9 +76,8 @@ module Appear
           nvim, pane = create_ide(filename)
         end
 
-        if nvim.has_file?(filename)
+        if nvim.find_buffer(filename)
           nvim.focus_file(filename)
-          return nvim, pane
         end
 
         w, h = nvim.size
@@ -88,25 +94,27 @@ module Appear
       #
       # @param filename [String]
       def create_ide(filename)
-        tmux_session = services.tmux.sessions.first
         dir = project_root(filename)
+        tmux_session = services.tmux.sessions.sort_by { |s| s.windows.length }.last
         if tmux_session
           window = tmux_session.windows.find do |win|
             panes = win.panes
-            panes.length == 1 && panes.first.pwd == dir
+            panes.length == 1 && panes.first.current_path == dir
           end || tmux_session.new_window(
             # -c: current directory
-            :c => dir
+            :c => dir,
+            # -d: do not focus
+            :d => true,
           )
         else
           tmux_session = services.tmux.new_session(
             # -c: current directory
-            :c => project_root(filename)
+            :c => dir
           )
           window = tmux_session.windows.first
         end
         bottom_pane = window.panes.first
-        top_pane = bottom_pane.split_pane(
+        top_pane = bottom_pane.split(
           # take 70% of the space
           :p => 70.0,
           # split into top and bottom
@@ -132,6 +140,9 @@ module Appear
       def call(filename)
         nvim, pane = find_or_create_ide(filename)
 
+        # focuses the file in the nvim instance
+        nvim.edit_file(filename)
+
         # focuses the pane in the tmux session
         services.tmux.reveal_pane(pane)
 
@@ -140,10 +151,33 @@ module Appear
         if client
           Appear.appear(client_pid)
         else
-          term_gui = Appear::Terminals.get_active_terminal || Appear::ITerm2.new
-          term_pane = term_gui.tmux_client_for_session(pane.session)
+          term_gui = Appear::Terminal.get_active_terminal(services) || Appear::Terminal.Iterm2.new(services)
+          term_pane = term_gui.create_tmux_client_for_session(pane.session)
           term_gui.reveal_pane(term_pane)
         end
+      end
+
+      # Guess the project root for a given path by inspecting its parent
+      # directories for certain markers like git roots.
+      #
+      # @param filename [String]
+      # @return [String] some path
+      def project_root(filename)
+        # TODO: a real constant? Some internet-provided list?
+        # these are files that indicate the root of a project
+        markers = %w(.git .hg Gemfile package.json setup.py README README.md)
+        p = Pathname.new(filename).expand_path
+        p.ascend do |path|
+          is_root = markers.any? do |marker|
+            path.join(marker).exist?
+          end
+
+          return path if is_root
+        end
+
+        # no markers were found
+        return p.to_s if p.directory?
+        return p.dirname.to_s
       end
     end
   end
