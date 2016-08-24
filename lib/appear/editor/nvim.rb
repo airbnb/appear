@@ -58,10 +58,10 @@ module Appear
       # This mapping was copied from the BufExplorer vim plugin.
       BUFFER_FILENAME_EXPANSIONS = {
         :name => '',
-        :fullname => ':p',
-        :path => ':p:h',
-        :relativename => ':~:.',
-        :relativepath => ':~:.:h',
+        :absolute_path => ':p',
+        :dirname => ':p:h',
+        :relative_path => ':~:.',
+        :relative_dirname => ':~:.:h',
         :shortname => ':t'
       }.freeze
       # order in which we pass these to vim.
@@ -70,17 +70,25 @@ module Appear
       # @return [#to_s] path to the unix socket used to talk to Nvim
       attr_reader :socket
 
-      # Find the appropriate Nvim session for a given filename
+      # Find the appropriate Nvim session for a given filename. First, we try
+      # to find a session actually editing this file. If none exists, we find
+      # the session with the deepest CWD that contains the filename.
+      #
       # @param filename [String]
       # @param deps [Hash] service dependencies. We require at least :runner
       def self.find_for_file(filename, deps = {})
-        nvim = nil
-        success = sockets.find do |sock|
+        cwd_to_nvim = {}
+
+        sockets.each do |sock|
           nvim = self.new(sock, deps)
-          path_contains?(nvim.cwd, filename)
+          # if one of these is actually editing this file, return right away!
+          return nvim if nvim.find_buffer(filename)
+          cwd_to_nvim[nvim.cwd] = nvim
         end
 
-        return nvim if success
+        cwd_by_depth = cwd_to_nvim.keys.sort_by { |d| Pathname.new(d).each_filename.to_a.length }
+        match = cwd_by_depth.find { |cwd| path_contains?(cwd, filename) }
+        return cwd_to_nvim[match]
       end
 
       # List all the sockets found in ~/.vim/sockets.
@@ -126,27 +134,6 @@ module Appear
         expr('getcwd()')
       end
 
-      # Open a file for editing in a new tab
-      #
-      # @param filename [String]
-      def open_tab(filename)
-        cmd("tabe #{filename}")
-      end
-
-      # Open a file for editing in a vertical split
-      #
-      # @param filename [String]
-      def open_vsplit(filename)
-        cmd("vsplit #{filename}")
-      end
-
-      # Open a file for editing in a horizontal split
-      #
-      # @param filename [String]
-      def open_hsplit(filename)
-        cmd("split #{filename}")
-      end
-
       # Get all the Vim panes in all tabs.
       #
       # @return [Array<Pane>] data
@@ -165,6 +152,17 @@ module Appear
           end
         end
         all_panes
+      end
+
+      def find_buffer(filename)
+        p = Pathname.new(filename).expand_path.to_s
+        get_buffers.find do |buffer|
+          res = buffer[:absolute_path] == p
+        end
+      end
+
+      def to_s
+        "#<#{self.class.name}:0x#{'%x' % (object_id << 1)} in #{cwd.inspect}>"
       end
 
       private
@@ -206,7 +204,8 @@ module Appear
 
       # as dumb as they come
       def self.path_contains?(parent, child)
-        child.to_s.start_with?(parent.to_s)
+        p, c = Pathname.new(parent), Pathname.new(child)
+        c.expand_path.to_s.start_with?(p.expand_path.to_s)
       end
     end
   end
