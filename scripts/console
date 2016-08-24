@@ -19,8 +19,11 @@ end
 instance, config = create_appear_instance
 services = instance.instance_variable_get('@all_services')
 # nvim = Appear::Editor::Nvim.find_for_file(File.expand_path('.'))
-nvim = Appear::Editor::Nvim.new(Appear::Editor::Nvim.sockets.last, services)
-puts "generated instance #{instance} from config #{config}"
-puts "connected nvim #{nvim}"
+# nvim = Appear::Editor::Nvim.new(Appear::Editor::Nvim.sockets.last, services)
+nvim = Appear::Editor::Nvim.find_for_file(__FILE__, services)
+ide = Appear::Editor::TmuxIde.new(services)
+puts "generated instance = #{instance} from config = #{config}"
+puts "connected nvim = #{nvim}"
+puts "generated ide = #{ide}"
 
 binding.pry
