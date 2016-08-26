@@ -116,15 +116,13 @@ module Appear
         bottom_pane = window.panes.first
         top_pane = bottom_pane.split(
           # take 70% of the space
-          :p => 70.0,
+          :p => 70,
           # split into top and bottom
           :v => true,
-          # new pane goes on top
-          :b => true
         )
 
         # cut this one in half for laffs - i like having two little terms
-        bottom_pane.split_pane
+        bottom_pane.split()
 
         # launch the editor inside the living shell in the top window
         # sends the command and then a newline

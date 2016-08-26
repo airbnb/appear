@@ -17,34 +17,36 @@ module Appear
       attr_reader :tmux
 
       # @opt opts [Symbol] :tmux tmux format string name of this attribute
-      # @opt opts [#to_proc] :parse proc taking a String (read from tmux) and a
-      #   hash (the total tmux data) and returns the type-coerced version of this
-      #   field. A symbol can be used, just like with usual block syntax.
+      # @opt opts [#to_proc] :parse proc taking a String (read from tmux) and
+      # returns the type-coerced version of this field. A symbol can be used,
+      # just like with usual block syntax.
       def self.attr_reader(name, opts = {})
-        super(name, opts)
+        var = super(name, opts)
         @tmux_attrs ||= {}
-        @tmux_attrs[name] = opts
+        @tmux_attrs[var] = opts if opts[:tmux]
       end
 
       def self.format_string
         result = ""
-        @tmux_attrs.each do |reader, opts|
-          var = opts.fetch(:var, reader).to_s
-          part = ' ' + var + ':#{' + opts.fetch(:tmux).to_s + '}'
+        @tmux_attrs.each do |var, opts|
+          next unless opts[:tmux]
+          part = ' ' + var.to_s + ':#{' + opts[:tmux].to_s + '}'
           result += part
         end
         result
       end
 
       def self.parse(tmux_hash, tmux)
-        result = tmux_hash.dup
-        result.each do |attr, tmux_val|
-          tmux, parser = @tmux_attrs[attr]
+        result = { :tmux => tmux }
+        tmux_hash.each do |var, tmux_val|
+          parser = @tmux_attrs[var][:parse]
           if parser
-            result[attr] = parser.to_proc.call(tmux_val)
+            result[var] = parser.to_proc.call(tmux_val)
+          else
+            result[var] = tmux_val
           end
         end
-        self.new(result.merge(:tmux => tmux))
+        self.new(result)
       end
     end
 
@@ -91,8 +93,8 @@ module Appear
 
       attr_reader :id, :tmux => :session_id
       attr_reader :attached, :tmux => :session_attached, :parse => :to_i
-      attr_reader :width, :tmux => :session_attached, :parse => :to_i
-      attr_reader :height
+      attr_reader :width, :tmux => :session_width, :parse => :to_i
+      attr_reader :height, :tmux => :session_height, :parse => :to_i
 
       def target
         session
@@ -125,7 +127,10 @@ module Appear
       attr_reader :id, :tmux => :window_id
 
       # @return [Boolean] is the window active?
-      attr_reader :active?, :tmux => :window_active, :var => :active, :parse => proc {|b| b.to_i != 0}
+      attr_reader :active?,
+        :tmux => :window_active,
+        :var => :active,
+        :parse => proc {|b| b.to_i != 0}
 
       def panes
         tmux.panes.select { |p| p.session == session && p.window == window }
@@ -173,7 +178,7 @@ module Appear
     #
     # @return [Array<Window>]
     def windows
-      ipc(command('list-windows').flags(:a => true), Window)
+      ipc_returning(command('list-windows').flags(:a => true), Window)
     end
 
     # Reveal a pane in tmux.
@@ -186,15 +191,15 @@ module Appear
     end
 
     def new_window(opts = {})
-      ipc_returning(command('new-window').flags(opts), Window)
+      ipc_returning(command('new-window').flags(opts), Window).first
     end
 
     def split_window(opts = {})
-      ipc_returning(command('split-window').flags(opts), Pane)
+      ipc_returning(command('split-window').flags(opts), Pane).first
     end
 
     def new_session(opts = {})
-      ipc_returning(command('new-session').flags(opts), Session)
+      ipc_returning(command('new-session').flags(opts), Session).first
     end
 
     private

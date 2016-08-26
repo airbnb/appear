@@ -1,5 +1,10 @@
+require 'appear/constants'
+
 module Appear
   module Util
+    # Thrown if a value is not supplied for an attribute
+    class MissingValueError < ::Appear::Error; end
+
     # An immutable value type, similar to Struct, but with annotated
     # attr_readers, that can be easily created from a Hash with the necessary
     # fields.
@@ -7,7 +12,11 @@ module Appear
       # @param data [Hash]
       def initialize(data)
         self.class.values.each do |val|
-          instance_variable_set("@#{val}", data.fetch(val))
+          begin
+            instance_variable_set("@#{val}", data.fetch(val))
+          rescue KeyError
+            raise MissingValueError.new("#{self.class.name}: no value for attribute #{val.inspect}")
+          end
         end
       end
 
@@ -24,6 +33,8 @@ module Appear
 
         # we could do super, but we want to allow defining :acttive? or so
         class_eval "def #{name}; @#{var_name}; end"
+
+        var_name
       end
 
       # @return [Array<Symbol>] names of all values

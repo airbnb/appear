@@ -73,7 +73,7 @@ module Appear
           flag = flag_name_to_arg(name)
           params.each do |param|
             res << flag
-            res << param unless param == true
+            res << param.to_s unless param == true
           end
         end
         res << '--' if @options[:dashdash_after_flags]
