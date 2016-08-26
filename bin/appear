@@ -1,6 +1,12 @@
 #!/usr/bin/env ruby
 require 'pathname'
 
+# require pry in development
+begin
+  require 'pry'
+rescue LoadError
+end
+
 begin
   require 'appear/command'
 rescue LoadError
