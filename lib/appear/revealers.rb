@@ -19,7 +19,10 @@ module Appear
       def call(tree)
         target, *rest = tree
         if supports_tree?(target, rest)
+          log("#{self.class.name}: running")
           return reveal_tree(tree)
+        else
+          log("#{self.class.name}: no support")
         end
       end
 

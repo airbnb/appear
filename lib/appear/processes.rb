@@ -20,6 +20,10 @@ module Appear
           send("#{key}=", value)
         end
       end
+
+      def to_s
+        'ProcessInfo' + {pid: pid, command: command, name: name, parent_pid: parent_pid}.inspect
+      end
     end
 
     def initialize(*args)
