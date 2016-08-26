@@ -100,6 +100,16 @@ module Appear
     # @param files [Array<String>] files to query
     # @return [Hash<String, Array<Connection>>] map of filename to connections
     def lsofs(files, opts = {})
+      if use_fstat?
+        fstats(files)
+      else
+        lsofs_(file, opts)
+      end
+    end
+
+    private
+
+    def lsofs_(files, opts = {})
       mutex = Mutex.new
       results = {}
       threads = files.map do |file|
@@ -114,7 +124,24 @@ module Appear
       results
     end
 
-    private
+    def fstats(files)
+      results = {}
+      files.each do |file|
+        results[file] = fstat(file)
+      end
+      results
+    end
+
+    def use_fstat?
+      return @use_fstat unless @use_fstat.nil?
+
+      begin
+        run(['which', 'fstat'])
+        @use_fstat = true
+      rescue ExecutionFailure
+        @use_fstat = false
+      end
+    end
 
     def lsof(file, opts = {})
       error_line = nil
@@ -146,6 +173,33 @@ module Appear
     rescue LsofParseError => err
       log("lsof: parse error: #{err}, line: #{error_line}")
       []
+    end
+
+    # FreeBSD lsof-like program, that actually runs much faster - so fast that
+    # I'm unconcerned about memoization or threading.
+    #
+    # @param file [String]
+    def fstat(file)
+      output = run(['fstat', file])
+      return [] if output.empty?
+      rows = output.lines.map do |line|
+        user, cmd, pid, fd, mount, inum, mode, sz_dv, rw, *name = line.strip.split(/\s+/)
+        name = name.join(' ')
+        Connection.new({
+          command_name: cmd,
+          pid: pid.to_i,
+          user: user,
+          fd: fd,
+          # type: what is that
+          type: nil,
+          # device: should we use mount?
+          device: mount,
+          size: sz_dv,
+          node: inum,
+          file_name: name,
+        })
+      end
+      rows[1..-1]
     end
   end
 end
