@@ -86,10 +86,10 @@ module Appear
 
     def fetch_info(pid)
       raise DeadProcess.new("cannot fetch info for dead PID #{pid}") unless alive?(pid)
-      output = run(['ps', '-p', pid.to_s, '-o', 'ppid=', '-o', 'command='])
-      ppid, *command = output.strip.split(/\s+/).reject(&:empty?)
-      name = File.basename(command.first)
-      ProcessInfo.new({:pid => pid.to_i, :parent_pid => ppid.to_i, :command => command, :name => name})
+      output = run(['ps', '-p', pid.to_s, '-o', 'ppid=', '-o', 'comm=', '-o', 'args='])
+      ppid, command, *args = output.strip.split(/\s+/).reject(&:empty?)
+      name = File.basename(command)
+      ProcessInfo.new({:pid => pid.to_i, :parent_pid => ppid.to_i, :command => args, :name => name})
     end
   end
 end
