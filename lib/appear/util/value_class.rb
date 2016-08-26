@@ -14,13 +14,15 @@ module Appear
       # Define an attribute reader that can be populated by the constructor.
       #
       # @param name [Symbol] define an attr_reader with this name
-      # @param var_name [Symbol] read from this instance variable, or the name
-      def self.attr_reader(name, var_name = nil)
-        var_name ||= name
+      # @param opts [Hash] options
+      # @opt opts [Symbol] :var instance variable we should read from
+      def self.attr_reader(name, opts = {})
+        var_name = opts.fetch(:var, name)
 
         @values ||= []
         @values << var_name
 
+        # we could do super, but we want to allow defining :acttive? or so
         class_eval "def #{name}; @#{var_name}; end"
       end
 
