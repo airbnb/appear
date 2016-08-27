@@ -73,15 +73,27 @@ module Appear
       # @return [String] pane current path
       attr_reader :current_path, tmux: :pane_current_path
 
+      # @return [String] window id
+      attr_reader :id, :tmux => :pane_id
+
       # String suitable for use as the "target" specifier for a Tmux command
       #
       # @return [String]
       def target
-        "#{session}:#{window}.#{pane}"
+        # "#{session}:#{window}.#{pane}"
+        id
       end
 
       def split(opts = {})
         tmux.split_window(opts.merge(:t => target))
+      end
+
+      def reveal
+        tmux.reveal_pane(self)
+      end
+
+      def send_keys(keys, opts = {})
+        tmux.send_keys(self, keys, opts)
       end
     end
 
@@ -97,7 +109,8 @@ module Appear
       attr_reader :height, :tmux => :session_height, :parse => :to_i
 
       def target
-        session
+        # session
+        id
       end
 
       def windows
@@ -137,7 +150,8 @@ module Appear
       end
 
       def target
-        "#{session}:#{window}"
+        # "#{session}:#{window}"
+        id
       end
     end
 
@@ -151,6 +165,10 @@ module Appear
 
       # @return [String] session name
       attr_reader :session, :tmux => :client_session
+
+      def target
+        tty
+      end
     end
 
     # List all the tmux clients on the system
@@ -185,21 +203,26 @@ module Appear
     #
     # @param pane [Pane] a pane
     def reveal_pane(pane)
-      ipc(command('select-pane').flags(:t => "#{pane.session}:#{pane.window}.#{pane.pane}"))
+      ipc(command('select-pane').flags(:t => pane.target))
+      # TODO: how do we use a real target for this?
       ipc(command('select-window').flags(:t => "#{pane.session}:#{pane.window}"))
       pane
     end
 
     def new_window(opts = {})
-      ipc_returning(command('new-window').flags(opts), Window).first
+      ipc_returning_one(command('new-window').flags(opts), Window)
     end
 
     def split_window(opts = {})
-      ipc_returning(command('split-window').flags(opts), Pane).first
+      ipc_returning_one(command('split-window').flags(opts), Pane)
     end
 
     def new_session(opts = {})
-      ipc_returning(command('new-session').flags(opts), Session).first
+      ipc_returning_one(command('new-session').flags(opts), Session)
+    end
+
+    def send_keys(pane, keys, opts = {})
+      ipc(command('send-keys').flags(opts.merge(:t => pane.target)).args(*keys))
     end
 
     private
@@ -225,6 +248,11 @@ module Appear
       ipc(cmd).map do |row|
         klass.parse(row, self)
       end
+    end
+
+    def ipc_returning_one(cmd, klass)
+      # -P in tmux is usually required to print information about newly created objects
+      ipc_returning(cmd.flags(:P => true), klass).first
     end
   end
 end
