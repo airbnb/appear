@@ -161,10 +161,48 @@ module Appear
       end
 
       def find_buffer(filename)
-        p = Pathname.new(filename).expand_path.to_s
+        p = File.expand_path(filename)
         get_buffers.find do |buffer|
-          res = buffer[:absolute_path] == p
+          buffer[:absolute_path] == p
         end
+      end
+
+      def find_pane(filename)
+        p = File.expand_path(filename)
+        panes.find do |pane|
+          buff = pane.buffer_info
+          buff[:absolute_path] == p
+        end
+      end
+
+      # Open a file in vim, or focus a window editing this file, if it's
+      # already open. Vim has a command a lot like this, but I can't get it to
+      # work in either of {vim,nvim} the way the docs say it should. That's why
+      # it's re-implemented here.
+      #
+      # @param filename [String]
+      def drop(filename)
+        # not using find_buffer because we care about panes; we'll have to open
+        # a new one if one doesn't exist anyways.
+        pane = find_pane(filename)
+
+        if pane
+          reveal_pane(pane)
+          return pane
+        end
+
+        # TODO: consider options other than vsplit
+        # TODO: such as opening in the main window with :edit if the main
+        # window is an empty [NoName] buffer, from a new vim maybe?
+        cmd("vertical split #{filename.shellescape}")
+        find_pane(filename)
+      end
+
+      def reveal_pane(pane)
+        # go to tab
+        cmd("tabnext #{pane.tab}")
+        # go to window
+        cmd("#{pane.window} . wincmd w")
       end
 
       def to_s
