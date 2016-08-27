@@ -36,7 +36,7 @@ module Appear
       #   opeing files, or nil if nvim isn't running or there are no suitable sessions.
       def find_nvim(filename)
         res = ::Appear::Editor::Nvim.find_for_file(filename, services)
-        log("nvim for file #{filename.inspect}: #{res.inspect}")
+        log("nvim for file #{filename.inspect}: #{res}")
         res
       end
 
@@ -66,28 +66,9 @@ module Appear
       #
       # @param filename [String]
       def find_or_create_ide(filename)
-        # remember that this can be nil
         nvim = find_nvim(filename)
-        pane = nil
-        if nvim
-          pane = find_tmux_pane(nvim)
-        else
-          # TODO: implement create_new_session
-          nvim, pane = create_ide(filename)
-        end
-
-        if nvim.find_buffer(filename)
-          nvim.focus_file(filename)
-        end
-
-        w, h = nvim.size
-        if w > 100
-          nvim.open_vsplit(filename)
-        else
-          nvim.open_tab(filename)
-        end
-
-        return nvim, pane
+        return nvim, find_tmux_pane(nvim) unless nvim.nil?
+        create_ide(filename)
       end
 
       # Create a new IDE instance editing `filename`
@@ -115,6 +96,9 @@ module Appear
           :d => true,
         )
 
+        # remember our pid list
+        existing_nvims = services.processes.pgrep(Nvim::NEOVIM)
+
         # split window across the middle, into a big and little pane
         main = window.panes.first
         main.send_keys([Nvim.edit_command(filename).to_s, "\n"], :l => true)
@@ -123,11 +107,31 @@ module Appear
         right = left.split(:p => 50, :h => true, :c => dir)
         # put a vim in the top pane, and select it
         [left, right].each_with_index do |pane, idx|
-          pane.send_keys(["bottom pane ##{idx}"] :l => true)
+          pane.send_keys(["bottom pane ##{idx}"], :l => true)
         end
-        main.reveal
 
-        return find_nvim(filename), main
+        # Hacky way to wait for nvim to launch! This should take at most 2
+        # seconds, otherwise your vim is launching too slowley ;)
+        wait_until(2) { (services.processes.pgrep(Nvim::NEOVIM) - existing_nvims).length >= 1 }
+
+        nvim = find_nvim(filename)
+        return nvim, find_tmux_pane(nvim)
+      end
+
+      def wait_until(max_duration, sleep = 0.1)
+        raise ArgumentError.new("no block given") unless block_given?
+        start = Time.new
+        limit = start + max_duration
+        iters = 0
+        while Time.new < limit
+          if yield
+            log("wait_until(max_duration=#{max_duration}, sleep=#{sleep}) slept #{iters} times, took #{Time.new - start}s")
+            return true
+          end
+          iters = iters + 1
+          sleep(sleep)
+        end
+        false
       end
 
       # reveal a file in an existing or new IDE session
@@ -136,14 +140,15 @@ module Appear
       def call(filename)
         nvim, pane = find_or_create_ide(filename)
 
-        # focuses the file in the nvim instance
-        nvim.edit_file(filename)
+        # focuses the file in the nvim instance, or start editing it.
+        nvim.drop(filename)
 
         # focuses the pane in the tmux session
-        services.tmux.reveal_pane(pane)
+        services.tmux.reveal_pane(pane) if pane
 
         # gotta get a client
-        client_pid = tmux_client_for_tree(processes.process_tree(nvim.pid))
+        Revealers::Tmux.new()
+        client_pid = services.tmux.find_client_for_tree(services.processes.process_tree(nvim.pid))
         if client
           Appear.appear(client_pid)
         else
