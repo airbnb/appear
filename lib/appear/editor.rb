@@ -95,41 +95,39 @@ module Appear
       # @param filename [String]
       def create_ide(filename)
         dir = project_root(filename)
+
+        # find or create session
         tmux_session = services.tmux.sessions.sort_by { |s| s.windows.length }.last
-        if tmux_session
-          window = tmux_session.windows.find do |win|
-            panes = win.panes
-            panes.length == 1 && panes.first.current_path == dir
-          end || tmux_session.new_window(
-            # -c: current directory
-            :c => dir,
-            # -d: do not focus
-            :d => true,
-          )
-        else
-          tmux_session = services.tmux.new_session(
-            # -c: current directory
-            :c => dir
-          )
-          window = tmux_session.windows.first
-        end
-        bottom_pane = window.panes.first
-        top_pane = bottom_pane.split(
-          # take 70% of the space
-          :p => 70,
-          # split into top and bottom
-          :v => true,
+        tmux_session ||= services.tmux.new_session(
+          # -c: current directory
+          :c => dir
         )
 
-        # cut this one in half for laffs - i like having two little terms
-        bottom_pane.split()
+        # find or create window
+        window = tmux_session.windows.find do |win|
+          win.panes.first.current_path == dir
+        end
 
-        # launch the editor inside the living shell in the top window
-        # sends the command and then a newline
-        #-l flag is literal, ensuring keys will be sent as a string
-        top_pane.send_keys(nvim_edit_command(filename), "\n", :l => true)
+        window ||= tmux_session.new_window(
+          # -c: current directory
+          :c => dir,
+          # -d: do not focus
+          :d => true,
+        )
 
-        return find_nvim(filename), top_pane
+        # split window across the middle, into a big and little pane
+        main = window.panes.first
+        main.send_keys([Nvim.edit_command(filename).to_s, "\n"], :l => true)
+        left = main.split(:p => 30, :v => true, :c => dir)
+        # cut the smaller bottom pane in half
+        right = left.split(:p => 50, :h => true, :c => dir)
+        # put a vim in the top pane, and select it
+        [left, right].each_with_index do |pane, idx|
+          pane.send_keys(["bottom pane ##{idx}"] :l => true)
+        end
+        main.reveal
+
+        return find_nvim(filename), main
       end
 
       # reveal a file in an existing or new IDE session
