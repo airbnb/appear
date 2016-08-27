@@ -28,7 +28,8 @@ module Appear
     # different things.
     class Nvim < Service
       # the `neovim-remote` command name
-      COMMAND = 'nvr'.freeze
+      NVR = 'nvr'.freeze
+      NEOVIM = 'nvim'.freeze
 
       # the value to use for Vim buffers with no name. This is the UI value
       # that Vim usually shows.
@@ -97,6 +98,11 @@ module Appear
       # @return [Array<Pathname>]
       def self.sockets
         Dir.glob(File.expand_path('~/.vim/sockets/*.sock')).map {|fn| Pathname.new(fn) }
+      end
+
+      # Spawn a new NVIM instance, then connect to its socket.
+      def self.edit_command(filename)
+        ::Appear::Util::CommandBuilder.new(NEOVIM).args(filename)
       end
 
       # @param socket [#to_s] UNIX socket to use to talk to Nvim.
@@ -168,7 +174,7 @@ module Appear
       private
 
       def command
-        ::Appear::Util::CommandBuilder.new(COMMAND).flags(:servername => @socket.to_s)
+        ::Appear::Util::CommandBuilder.new(NVR).flags(:servername => @socket.to_s)
       end
 
       # Vimscript return values look vaguely like YAML, so parse them with
