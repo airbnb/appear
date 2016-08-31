@@ -131,7 +131,15 @@ Iterm2.prototype.revealTty = function revealTty(tty) {
 }
 
 Iterm2.prototype.newWindow = function newWindow(command) {
-  return this.app.createWindowWithDefaultProfile(command)
+  var window = this.app.createWindowWithDefaultProfile({command: command})
+  var session = window.currentSession();
+
+  return {
+    win: window,
+    tab: window.currentTab(),
+    session: session,
+    tty: session.tty(),
+  };
 }
 
 delegateMethod('iterm2_reveal_tty', Iterm2, 'revealTty')

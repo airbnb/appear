@@ -1,6 +1,3 @@
-require 'open3'
-require 'shellwords'
-
 # Appear your terminal programs in your gui!
 #
 # Appear is a tool for revealing a given process in your terminal. Given a

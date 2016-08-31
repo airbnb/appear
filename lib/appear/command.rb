@@ -1,6 +1,7 @@
 require 'appear/constants'
 require 'appear/config'
 require 'appear/instance'
+require 'appear/editor'
 require 'optparse'
 
 module Appear
@@ -34,6 +35,11 @@ module Appear
           @config.record_runs = flag
         end
 
+        o.on('-e', '--edit [EDITOR]', "instead of revealing a PID, edit a file the given editor. Editors: #{::Appear::Editor::ALL.map {|c| c.name}}") do |flag|
+          @config.edit_file = true
+          @config.editor = flag
+        end
+
         o.on('--version', 'show version information, then exit') do
           puts "appear #{Appear::VERSION}"
           puts "  author: Jake Teton-Landis"
@@ -54,12 +60,7 @@ module Appear
       end
     end
 
-    # Execute the command. Will exit(3) with a status; does not return.
-    #
-    # @param all_args [Array<String>] something like ARGV
-    def execute(all_args)
-      argv = option_parser.parse(*all_args)
-
+    def execute_pid(argv)
       if argv.empty?
         pid = Process.pid
         start_message = "STARTING. pid: #{pid} (current process pid)"
@@ -81,6 +82,29 @@ module Appear
       else
         # did not appear, but no errors encountered
         exit 2
+      end
+    end
+
+    def execute_edit(argv)
+      file = argv.first
+      raise ArgumentError.new("no file passed") if file.nil?
+      revealer = Appear::Instance.new(@config)
+      # this is a sin, for now
+      services = revealer.instance_variable_get('@all_services')
+      ide = ::Appear::Editor::TmuxIde.new(services)
+      ide.call(file)
+    end
+
+    # Execute the command. Will exit(3) with a status; does not return.
+    #
+    # @param all_args [Array<String>] something like ARGV
+    def execute(all_args)
+      argv = option_parser.parse(*all_args)
+
+      if @config.edit_file
+        return execute_edit(argv)
+      else
+        return execute_pid(argv)
       end
     end
   end

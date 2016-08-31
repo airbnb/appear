@@ -15,10 +15,17 @@ module Appear
     # @return [Boolean] default false
     attr_accessor :record_runs
 
+    # @return [Boolean] default false
+    attr_accessor :edit_file
+
+    # @return [String, nil] default nil
+    attr_accessor :editor
+
     # sets defaults
     def initialize
       self.silent = true
       self.record_runs = false
+      self.edit_file = false
     end
   end
 end

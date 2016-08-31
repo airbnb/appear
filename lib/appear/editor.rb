@@ -28,9 +28,12 @@ module Appear
     # |-----------|
     class TmuxIde < Service
 
+      require_service :revealer
       require_service :processes
       require_service :tmux
       require_service :runner # needed for sub-services
+      require_service :lsof # needed for sub-services
+      require_service :terminals
 
       # @return [Appear::Editor::Nvim, nil] an nvim editor session suitable for
       #   opeing files, or nil if nvim isn't running or there are no suitable sessions.
@@ -143,19 +146,15 @@ module Appear
         # focuses the file in the nvim instance, or start editing it.
         nvim.drop(filename)
 
-        # focuses the pane in the tmux session
-        services.tmux.reveal_pane(pane) if pane
+        # go ahead and reveal our nvim
+        return true if services.revealer.call(nvim.pid)
 
-        # gotta get a client
-        Revealers::Tmux.new()
-        client_pid = services.tmux.find_client_for_tree(services.processes.process_tree(nvim.pid))
-        if client
-          Appear.appear(client_pid)
-        else
-          term_gui = Appear::Terminal.get_active_terminal(services) || Appear::Terminal.Iterm2.new(services)
-          term_pane = term_gui.create_tmux_client_for_session(pane.session)
-          term_gui.reveal_pane(term_pane)
-        end
+        # if we didn't return, we need to create a Tmux client for our
+        # session.
+        command = services.tmux.attach_session_command(pane.session)
+        terminal = services.terminals.get
+        term_pane = terminal.new_window(command.to_s)
+        terminal.reveal_pane(term_pane)
       end
 
       # Guess the project root for a given path by inspecting its parent
@@ -181,6 +180,8 @@ module Appear
         return p.dirname.to_s
       end
     end
+
+    ALL = [TmuxIde]
   end
 end
 

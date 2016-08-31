@@ -1,6 +1,30 @@
 require 'appear/service'
+require 'appear/constants'
 
 module Appear
+  class Terminals
+    def initialize(terminals)
+      @terminals = terminals
+    end
+
+    def get
+      current || default
+    end
+
+    private
+
+    def current
+      @terminals.find { |t| t.running? }
+    end
+
+    def default
+      # TODO: select terminals based on OS support or should that happen
+      # upstream? in the creator of the Terminals instance? No. It should
+      # happen here.
+      @terminals.find { |t| t.class == TerminalApp }
+    end
+  end
+
   module Terminal
     # Base class for mac terminal support
     class MacTerminal < Service
@@ -20,7 +44,6 @@ module Appear
       def running?
         services.processes.pgrep(app_name).length > 0
       end
-
 
       # Enumerate the panes (seperate interactive sessions) that this terminal
       # program has.
@@ -49,7 +72,7 @@ module Appear
 
       # @see MacTerminal#panes
       def panes
-        pids = services.processes.pgrep('Terminal')
+        pids = services.processes.pgrep(app_name)
         services.mac_os.call_method('terminal_panes').map do |hash|
           hash[:pids] = pids
           OpenStruct.new(hash)
@@ -71,7 +94,7 @@ module Appear
 
       # @see MacTerminal#panes
       def panes
-        pids = services.processes.pgrep('iTerm2')
+        pids = services.processes.pgrep(app_name)
         services.mac_os.call_method('iterm2_panes').map do |hash|
           hash[:pids] = pids
           OpenStruct.new(hash)
@@ -81,6 +104,15 @@ module Appear
       # @see MacTerminal#reveal_pane
       def reveal_pane(pane)
         services.mac_os.call_method('iterm2_reveal_tty', pane.tty)
+      end
+
+      # Create a new window running the given command.
+      #
+      # @param command_str [String] command to run
+      # @return [#tty] pane
+      def new_window(command_str)
+        res = services.mac_os.call_method('iterm2_new_window', command_str)
+        OpenStruct.new(res)
       end
     end
   end

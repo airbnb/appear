@@ -225,6 +225,10 @@ module Appear
       ipc(command('send-keys').flags(opts.merge(:t => pane.target)).args(*keys))
     end
 
+    def attach_session_command(session)
+      command('attach-session').flags(:t => session)
+    end
+
     private
 
     def command(subcommand)
