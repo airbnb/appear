@@ -86,13 +86,13 @@ module Appear
     end
 
     def execute_edit(argv)
-      file = argv.first
-      raise ArgumentError.new("no file passed") if file.nil?
+      raise ArgumentError.new("no file passed") if argv.empty?
+
       revealer = Appear::Instance.new(@config)
       # this is a sin, for now
       services = revealer.instance_variable_get('@all_services')
       ide = ::Appear::Editor::TmuxIde.new(services)
-      ide.call(file)
+      ide.call(*argv)
     end
 
     # Execute the command. Will exit(3) with a status; does not return.

@@ -71,33 +71,13 @@ module Appear
       # @return [#to_s] path to the unix socket used to talk to Nvim
       attr_reader :socket
 
-      # Find the appropriate Nvim session for a given filename. First, we try
-      # to find a session actually editing this file. If none exists, we find
-      # the session with the deepest CWD that contains the filename.
-      #
-      # @param filename [String]
-      # @param deps [Hash] service dependencies. We require at least :runner
-      def self.find_for_file(filename, deps = {})
-        cwd_to_nvim = {}
-
-        sockets.each do |sock|
-          nvim = self.new(sock, deps)
-          # if one of these is actually editing this file, return right away!
-          return nvim if nvim.find_buffer(filename)
-          cwd_to_nvim[nvim.cwd] = nvim
-        end
-
-        cwd_by_depth = cwd_to_nvim.keys.sort_by { |d| Pathname.new(d).each_filename.to_a.length }
-        match = cwd_by_depth.find { |cwd| path_contains?(cwd, filename) }
-        return cwd_to_nvim[match]
-      end
 
       # List all the sockets found in ~/.vim/sockets.
       # I put this in my zshrc to make this work:
       # `export NVIM_LISTEN_ADDRESS="$HOME/.vim/sockets/vim-zsh-$$.sock"`
       # @return [Array<Pathname>]
       def self.sockets
-        Dir.glob(File.expand_path('~/.vim/sockets/*.sock')).map {|fn| Pathname.new(fn) }
+        Dir.glob(File.expand_path('~/.vim/sockets/*.sock'))
       end
 
       # Spawn a new NVIM instance, then connect to its socket.
@@ -109,6 +89,7 @@ module Appear
       def initialize(socket, svc = {})
         super(svc)
         @socket = socket
+        @expr_memo = ::Appear::Util::Memoizer.new
       end
 
       # evaluate a Vimscript expression
@@ -116,7 +97,9 @@ module Appear
       # @param vimstring [String] the expression, eg "fnamemodify('~', ':p')"
       # @return [Object] expression result, parsed as YAML.
       def expr(vimstring)
-        parse_output_as_yaml(run(command.flag('remote-expr', vimstring).to_a))
+        @expr_memo.call(vimstring) do
+          parse_output_as_yaml(run(command.flag('remote-expr', vimstring).to_a))
+        end
       end
 
       # Perform a Vim command
@@ -144,20 +127,22 @@ module Appear
       #
       # @return [Array<Pane>] data
       def panes
-        all_buffers = get_buffers
-        all_panes = []
-        get_windows.each_with_index do |wins, tab_idx|
-          wins.each_with_index do |buffer, win_idx|
-            all_panes << Pane.new(
-              # in Vim, tabs and windows start indexing at 1
-              :tab => tab_idx + 1,
-              :window => win_idx + 1,
-              :buffer => buffer,
-              :buffer_info => all_buffers[buffer - 1]
-            )
+        @expr_memo.call(nil, 'panes') do
+          all_buffers = get_buffers
+          all_panes = []
+          get_windows.each_with_index do |wins, tab_idx|
+            wins.each_with_index do |buffer, win_idx|
+              all_panes << Pane.new(
+                # in Vim, tabs and windows start indexing at 1
+                :tab => tab_idx + 1,
+                :window => win_idx + 1,
+                :buffer => buffer,
+                :buffer_info => all_buffers[buffer - 1]
+              )
+            end
           end
+          all_panes
         end
-        all_panes
       end
 
       def find_buffer(filename)
@@ -168,7 +153,7 @@ module Appear
       end
 
       def find_pane(filename)
-        p = File.expand_path(filename)
+        p = Pathname.new(filename).expand_path.to_s
         panes.find do |pane|
           buff = pane.buffer_info
           buff[:absolute_path] == p
@@ -237,6 +222,7 @@ module Appear
 
         as_a = expr(%Q(map( range(1, bufnr('$')), "[v:val, #{cmd} ]" )))
         as_a.map do |row|
+          row = row.dup
           buf = {:buffer => row.shift}
           row.each_with_index do |it, i|
             buf[BUFFER_FILENAME_ORDER[i]] = it
@@ -246,11 +232,6 @@ module Appear
         end
       end
 
-      # as dumb as they come
-      def self.path_contains?(parent, child)
-        p, c = Pathname.new(parent), Pathname.new(child)
-        c.expand_path.to_s.start_with?(p.expand_path.to_s)
-      end
     end
   end
 end

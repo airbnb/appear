@@ -35,12 +35,56 @@ module Appear
       require_service :lsof # needed for sub-services
       require_service :terminals
 
-      # @return [Appear::Editor::Nvim, nil] an nvim editor session suitable for
-      #   opeing files, or nil if nvim isn't running or there are no suitable sessions.
-      def find_nvim(filename)
-        res = ::Appear::Editor::Nvim.find_for_file(filename, services)
-        log("nvim for file #{filename.inspect}: #{res}")
-        res
+      def initialize(svcs = {})
+        super(svcs)
+        @tmux_memo = ::Appear::Util::Memoizer.new
+      end
+
+      def update_nvims
+        @nvims ||= {}
+        @nvim_to_cwd ||= {}
+        @cwd_to_nvim ||= {}
+        new_nvims = false
+
+        Nvim.sockets.each do |sock|
+          next if @nvims[sock]
+
+          new_nvims = true
+          nvim = Nvim.new(sock, services)
+          @nvims[sock] = nvim
+          cwd = nvim.cwd
+          @nvim_to_cwd[nvim] = cwd
+          @cwd_to_nvim[cwd] = nvim
+        end
+
+        if new_nvims
+          @cwd_by_depth = @cwd_to_nvim.keys.sort_by { |d| Pathname.new(d).each_filename.to_a.length }
+        end
+      end
+
+      # as dumb as they come
+      def path_contains?(parent, child)
+        p, c = Pathname.new(parent), Pathname.new(child)
+        c.expand_path.to_s.start_with?(p.expand_path.to_s)
+      end
+
+      # Find the appropriate Nvim session for a given filename. First, we try
+      # to find a session actually editing this file. If none exists, we find
+      # the session with the deepest CWD that contains the filename.
+      #
+      # @param filename [String]
+      # @return [::Appear::Editor::Nvim, nil]
+      def find_nvim_for_file(filename)
+        update_nvims
+        cwd_to_nvim = {}
+
+        @nvims.each do |_, nvim|
+          return nvim if nvim.find_buffer(filename)
+        end
+
+        match = @cwd_by_depth.find { |cwd| path_contains?(cwd, filename) }
+        return nil unless match
+        @cwd_to_nvim[match]
       end
 
       # find the tmux pane holding an nvim editor instance.
@@ -48,20 +92,22 @@ module Appear
       # @param nvim [Appear::Editor::Nvim]
       # @return [Appear::Tmux::Pane, nil] the pane, or nil if not found
       def find_tmux_pane(nvim)
-        tree = services.processes.process_tree(nvim.pid)
-        tmux_server = tree.find { |p| p.name == 'tmux' }
-        return nil unless tmux_server
+        @tmux_memo.call(nvim) do
+          tree = services.processes.process_tree(nvim.pid)
+          tmux_server = tree.find { |p| p.name == 'tmux' }
+          next nil unless tmux_server
 
-        # the first join should be the tmux pane holding our
-        # nvim session.
-        proc_and_panes = Util::Join.join(:pid, services.tmux.panes, tree)
-        pane_join = proc_and_panes.first
-        return nil unless pane_join
+          # the first join should be the tmux pane holding our
+          # nvim session.
+          proc_and_panes = Util::Join.join(:pid, services.tmux.panes, tree)
+          pane_join = proc_and_panes.first
+          next nil unless pane_join
 
-        # new method on join: let's you get an underlying
-        # object out of the join if it matches a predicate.
-        return pane_join.unjoin do |o|
-          o.is_a? ::Appear::Tmux::Pane
+          # new method on join: let's you get an underlying
+          # object out of the join if it matches a predicate.
+          next pane_join.unjoin do |o|
+            o.is_a? ::Appear::Tmux::Pane
+          end
         end
       end
 
@@ -69,7 +115,7 @@ module Appear
       #
       # @param filename [String]
       def find_or_create_ide(filename)
-        nvim = find_nvim(filename)
+        nvim = find_nvim_for_file(filename)
         return nvim, find_tmux_pane(nvim) unless nvim.nil?
         create_ide(filename)
       end
@@ -140,21 +186,35 @@ module Appear
       # reveal a file in an existing or new IDE session
       #
       # @param filename [String]
-      def call(filename)
-        nvim, pane = find_or_create_ide(filename)
+      def call(*filenames)
+        nvims = []
+        nvim_to_session = {}
 
-        # focuses the file in the nvim instance, or start editing it.
-        nvim.drop(filename)
+        filenames.each do |filename|
+          filename = File.expand_path(filename)
+          nvim, pane = find_or_create_ide(filename)
+          # focuses the file in the nvim instance, or start editing it.
+          Thread.new { nvim.drop(filename) }
+          nvims << nvim unless nvims.include?(nvim)
+          nvim_to_session[nvim] = pane.session
+        end
 
-        # go ahead and reveal our nvim
-        return true if services.revealer.call(nvim.pid)
+        nvims.map do |nvim|
+          Thread.new do
+            # go ahead and reveal our nvim
+            next true if services.revealer.call(nvim.pid)
 
-        # if we didn't return, we need to create a Tmux client for our
-        # session.
-        command = services.tmux.attach_session_command(pane.session)
-        terminal = services.terminals.get
-        term_pane = terminal.new_window(command.to_s)
-        terminal.reveal_pane(term_pane)
+            session = nvim_to_session[nvim]
+            # if we didn't return, we need to create a Tmux client for our
+            # session.
+            command = services.tmux.attach_session_command(session)
+            terminal = services.terminals.get
+            term_pane = terminal.new_window(command.to_s)
+            terminal.reveal_pane(term_pane)
+          end
+        end.each(&:join)
+
+        log "#{self.class}: finito."
       end
 
       # Guess the project root for a given path by inspecting its parent

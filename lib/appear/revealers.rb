@@ -108,7 +108,7 @@ module Appear
       require_service :revealer
       require_service :processes
 
-      # Implementation.
+      # Implementation
       # @see BaseRevealer#supports_tree?
       def supports_tree?(target, rest)
         rest.any? { |p| p.name == 'tmux' }

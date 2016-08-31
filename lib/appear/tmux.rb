@@ -171,6 +171,11 @@ module Appear
       end
     end
 
+    def initialize(svcs = {})
+      super(svcs)
+      @memo = ::Appear::Util::Memoizer.new
+    end
+
     # List all the tmux clients on the system
     #
     # @return [Array<Client>]
@@ -248,9 +253,11 @@ module Appear
     end
 
     def ipc_returning(cmd, klass)
-      cmd.flags(:F => klass.format_string)
-      ipc(cmd).map do |row|
-        klass.parse(row, self)
+      @memo.call(cmd, klass) do
+        cmd.flags(:F => klass.format_string)
+        ipc(cmd).map do |row|
+          klass.parse(row, self)
+        end
       end
     end
 
