@@ -155,15 +155,15 @@ module Appear
         # cut the smaller bottom pane in half
         right = left.split(:p => 50, :h => true, :c => dir)
         # put a vim in the top pane, and select it
-        [left, right].each_with_index do |pane, idx|
-          pane.send_keys(["bottom pane ##{idx}"], :l => true)
-        end
+        #[left, right].each_with_index do |pane, idx|
+          #pane.send_keys(["bottom pane ##{idx}"], :l => true)
+        #end
 
         # Hacky way to wait for nvim to launch! This should take at most 2
         # seconds, otherwise your vim is launching too slowley ;)
         wait_until(2) { (services.processes.pgrep(Nvim::NEOVIM) - existing_nvims).length >= 1 }
 
-        nvim = find_nvim(filename)
+        nvim = find_nvim_for_file(filename)
         return nvim, find_tmux_pane(nvim)
       end
 
