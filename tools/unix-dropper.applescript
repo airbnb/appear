@@ -37,7 +37,9 @@
  * ```
  *)
 
-property default_command : "say \"dropped $ARG_C files. first file: $ARG_0\""
+-- property default_command : "say \"dropped $ARG_C files. first file: $ARG_0\""
+property default_command : "PATH=\"/usr/local/bin:$PATH\" /usr/local/bin/appear --edit -- \"$@\""
+
 
 --- this is a stored user preference.
 --- this is the default, but it can be set as a preference in a .plist if this script is saved as an applicication
@@ -76,9 +78,11 @@ end open
 --- here's how we end up building the shell script to call
 --- the user's shell script with hella sweet args
 on build_arg_vars(args)
+	-- MOAR SPEED
+	return {}
 	set argc to the count of args
 	set res to {set_env_var("ARG_C", argc)}
-
+	
 	repeat with i from 1 to the count of args
 		set arg to item i of args
 		copy set_env_var("ARG_" & i, arg) to end of res
@@ -93,9 +97,9 @@ on build_script(user_script, args)
 	set call_fn to fn_name & " " & join_list(args, " ")
 	set comment to "# we do this so you can use \"$@\"
 # and unix conventions if you're unix-y"
-
+	
 	set res to build_arg_vars(args)
-
+	
 	copy open_fn to beginning of res
 	copy user_script to end of res
 	copy close_fn to end of res
@@ -105,25 +109,25 @@ on build_script(user_script, args)
 end build_script
 
 on set_env_var(var, value)
-
+	
 	set res to var & "=" & (the quoted form of ("" & value))
 	# display dialog res
-
+	
 	return res
-
+	
 end set_env_var
 
 on join_list(the_list, sep)
 	if (count of the_list) is 0 then
 		return ""
 	end if
-
+	
 	if (count of the_list) is 1 then
 		return "" & item 1 of the_list
 	end if
-
+	
 	set res to "" & item 1 of the_list
-
+	
 	repeat with i from 2 to the count of the_list
 		set el to item i of the_list
 		set res to res & sep & el
