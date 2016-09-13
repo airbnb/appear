@@ -34,7 +34,13 @@ module Appear
       # @param flag_map [Hash<#to_s, [TrueClass, #to_s]>]
       def flags(flag_map)
         flag_map.each do |f, v|
-          flag(f, v)
+          if v.is_a?(Array)
+            v.each do |v_prime|
+              flag(f, v_prime)
+            end
+          else
+            flag(f, v)
+          end
         end
         self
       end
