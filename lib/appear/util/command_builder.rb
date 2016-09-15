@@ -91,6 +91,7 @@ module Appear
         end
         res << '--' if @options[:dashdash_after_flags]
         res.concat(@argv)
+        res.map { |v| v.to_s }
       end
 
       # @return [String] the command
