@@ -19,13 +19,13 @@ module Appear
     # that they can implement methods that proxy Tmux service interaction.
     class TmuxValue < ::Appear::Util::ValueClass
       # @return [Tmux] the tmux service that created this pane
-      attr_reader :tmux
+      property :tmux
 
       # @option opts [Symbol] :tmux tmux format string name of this attribute
       # @option opts [#to_proc] :parse proc taking a String (read from tmux) and
       # returns the type-coerced version of this field. A symbol can be used,
       # just like with usual block syntax.
-      def self.attr_reader(name, opts = {})
+      def self.property(name, opts = {})
         var = super(name, opts)
         @tmux_attrs ||= {}
         @tmux_attrs[var] = opts if opts[:tmux]
@@ -68,28 +68,28 @@ module Appear
     # A tmux pane.
     class Pane < TmuxValue
       # @return [Fixnum] pid of the process running in the pane
-      attr_reader :pid, tmux: :pane_pid, parse: :to_i
+      property :pid, tmux: :pane_pid, parse: :to_i
 
       # @return [String] session name
-      attr_reader :session, tmux: :session_name
+      property :session, tmux: :session_name
 
       # @return [Fixnum] window index
-      attr_reader :window, tmux: :window_index, parse: :to_i
+      property :window, tmux: :window_index, parse: :to_i
 
       # @return [Fixnum] pane index
-      attr_reader :pane, tmux: :pane_index, parse: :to_i
+      property :pane, tmux: :pane_index, parse: :to_i
 
       # @return [Boolean] is this pane the active pane in this session
-      attr_reader :active?, var: :active, tmux: :pane_active, parse: proc {|a| a.to_i != 0 }
+      property :active?, var: :active, tmux: :pane_active, parse: proc {|a| a.to_i != 0 }
 
       # @return [String] command running in this pane
-      attr_reader :command_name, tmux: :pane_current_command
+      property :command_name, tmux: :pane_current_command
 
       # @return [String] pane current path
-      attr_reader :current_path, tmux: :pane_current_path
+      property :current_path, tmux: :pane_current_path
 
       # @return [String] window id
-      attr_reader :id, :tmux => :pane_id
+      property :id, :tmux => :pane_id
 
       # String suitable for use as the "target" specifier for a Tmux command
       #
@@ -124,12 +124,19 @@ module Appear
     # Has many windows.
     class Session < TmuxValue
       # @return [String] session name
-      attr_reader :session, tmux: :session_name
+      property :session, tmux: :session_name
 
-      attr_reader :id, :tmux => :session_id
-      attr_reader :attached, :tmux => :session_attached, :parse => :to_i
-      attr_reader :width, :tmux => :session_width, :parse => :to_i
-      attr_reader :height, :tmux => :session_height, :parse => :to_i
+      # @return [String] tmux id of this session
+      property :id, :tmux => :session_id
+
+      # @return [Fixnum] number of clients attached to this session
+      property :attached, :tmux => :session_attached, :parse => :to_i
+
+      # @return [Fixnum] width, in text columns
+      property :width, :tmux => :session_width, :parse => :to_i
+
+      # @return [Fixnum] height, in text rows
+      property :height, :tmux => :session_height, :parse => :to_i
 
       # String suitable for use as the "target" specifier for a Tmux command
       #
@@ -139,12 +146,12 @@ module Appear
         id
       end
 
-      # @return [Array<Window>]
+      # @return [Array<Window>] the windows in this session
       def windows
         tmux.windows.select { |w| w.session == session }
       end
 
-      # @return [Array<Client>]
+      # @return [Array<Client>] all clients attached to this session
       def clients
         tmux.clients.select { |c| c.session == session }
       end
@@ -163,16 +170,16 @@ module Appear
     # Has many panes.
     class Window < TmuxValue
       # @return [String] session name
-      attr_reader :session, :tmux => :session_name
+      property :session, :tmux => :session_name
 
       # @return [Fixnum] window index
-      attr_reader :window, :tmux => :window_index, :parse => :to_i
+      property :window, :tmux => :window_index, :parse => :to_i
 
       # @return [String] window id
-      attr_reader :id, :tmux => :window_id
+      property :id, :tmux => :window_id
 
       # @return [Boolean] is the window active?
-      attr_reader :active?,
+      property :active?,
         :tmux => :window_active,
         :var => :active,
         :parse => proc {|b| b.to_i != 0}
@@ -194,13 +201,13 @@ module Appear
     # A tmux client.
     class Client < TmuxValue
       # @return [String] path to the TTY device of this client
-      attr_reader :tty, :tmux => :client_tty
+      property :tty, :tmux => :client_tty
 
       # @return [String] term name
-      attr_reader :term, :tmux => :client_termname
+      property :term, :tmux => :client_termname
 
       # @return [String] session name
-      attr_reader :session, :tmux => :client_session
+      property :session, :tmux => :client_session
 
       # String suitable for use as the "target" specifier for a Tmux command
       #

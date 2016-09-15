@@ -20,36 +20,44 @@ module Appear
     # Created from one output row of `lsof`.
     class Connection < ::Appear::Util::ValueClass
       # @return [String]
-      attr_reader :command_name
+      property :command_name
 
       # @return [Fixnum]
-      attr_reader :pid
+      property :pid
 
       # @return [String]
-      attr_reader :fd
+      property :fd
 
       # @return [String]
-      attr_reader :fd
+      property :fd
 
       # @return [String]
-      attr_reader :type
+      property :type
 
       # @return [String]
-      attr_reader :device
+      property :device
 
       # @return [String]
-      attr_reader :size
+      property :size
 
       # @return [String]
-      attr_reader :node
+      property :node
 
       # @return [String]
-      attr_reader :file_name
+      property :file_name
     end
 
     # Represents a pane's connection to a TTY.
     class PaneConnection
-      attr_reader :pane, :connection, :process
+      # @return [#tty] a Terminal emulator pane.
+      attr_reader :pane
+
+      # @return [Connection] an LSOF connection
+      attr_reader :connection
+
+      # @return [Appear::Processes::ProcessInfo] the process
+      attr_reader :process
+
       # @param pane [#tty] a pane in a terminal emulator
       # @param connection [Appear::Lsof::Connection] a connection of a process
       #   to a file -- usually a TTY device.

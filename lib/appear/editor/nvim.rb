@@ -39,16 +39,16 @@ module Appear
       # value class describing a vim pane.
       class Pane < Util::ValueClass
         # @return [Fixnum] vim tab number
-        attr_reader :tab
+        property :tab
 
         # @return [Fixnum] vim window number
-        attr_reader :window
+        property :window
 
         # @return [Fixnum] vim buffer number
-        attr_reader :buffer
+        property :buffer
 
         # @return [Hash<Symbol, String>] data about the buffer
-        attr_reader :buffer_info
+        property :buffer_info
       end
 
       delegate :run, :runner
@@ -171,7 +171,7 @@ module Appear
 
       # Open a file in vim, or focus a window editing this file, if it's
       # already open. Vim has a command a lot like this, but I can't get it to
-      # work in either of {vim,nvim} the way the docs say it should. That's why
+      # work in either of [vim,nvim] the way the docs say it should. That's why
       # it's re-implemented here.
       #
       # @param filename [String]

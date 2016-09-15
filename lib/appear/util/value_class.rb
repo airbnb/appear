@@ -2,16 +2,17 @@ require 'appear/constants'
 
 module Appear
   module Util
-    # Thrown if a value is not supplied for an attribute
-    class MissingValueError < ::Appear::Error; end
 
     # An immutable value type, similar to Struct, but with annotated
     # attr_readers, that can be easily created from a Hash with the necessary
     # fields.
     class ValueClass
+      # Thrown if a value is not supplied for an attribute
+      class MissingValueError < ::Appear::Error; end
+
       # @param data [Hash]
       def initialize(data)
-        self.class.values.each do |val|
+        self.class.properties.each do |val|
           begin
             instance_variable_set("@#{val}", data.fetch(val))
           rescue KeyError
@@ -24,12 +25,16 @@ module Appear
       #
       # @param name [Symbol] define an attr_reader with this name
       # @param opts [Hash] options
-      # @opt opts [Symbol] :var instance variable we should read from
-      def self.attr_reader(name, opts = {})
+      # @option opts [Symbol] :var instance variable we should read from
+      #
+      # @!macro [attach] value_class_property
+      #   @!method $1
+      #   The $1 property.
+      def self.property(name, opts = {})
         var_name = opts.fetch(:var, name)
 
-        @values ||= []
-        @values << var_name
+        @props ||= []
+        @props << var_name
 
         # we could do super, but we want to allow defining :acttive? or so
         class_eval "def #{name}; @#{var_name}; end"
@@ -37,13 +42,13 @@ module Appear
         var_name
       end
 
-      # @return [Array<Symbol>] names of all values
-      def self.values
-        @values ||= []
-        if self.superclass.respond_to?(:values)
-          @values + self.superclass.values
+      # @return [Array<Symbol>] names of all properties
+      def self.properties
+        @props ||= []
+        if self.superclass.respond_to?(:properties)
+          self.superclass.properties + @props
         else
-          @values
+          @props
         end
       end
     end
