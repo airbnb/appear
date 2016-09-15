@@ -12,12 +12,17 @@ module Appear
   class Tmux < Service
     delegate :run, :runner
 
+    # Base value class for Tmux values. This class works in concert with the
+    # Tmux service to make a fluent Tmux API easy.
+    #
+    # TmuxValues all have a reference to the Tmux service that created them, so
+    # that they can implement methods that proxy Tmux service interaction.
     class TmuxValue < ::Appear::Util::ValueClass
       # @return [Tmux] the tmux service that created this pane
       attr_reader :tmux
 
-      # @opt opts [Symbol] :tmux tmux format string name of this attribute
-      # @opt opts [#to_proc] :parse proc taking a String (read from tmux) and
+      # @option opts [Symbol] :tmux tmux format string name of this attribute
+      # @option opts [#to_proc] :parse proc taking a String (read from tmux) and
       # returns the type-coerced version of this field. A symbol can be used,
       # just like with usual block syntax.
       def self.attr_reader(name, opts = {})
@@ -26,6 +31,11 @@ module Appear
         @tmux_attrs[var] = opts if opts[:tmux]
       end
 
+      # The format string we pass to Tmux when we expect a result of this
+      # class's type. This format string should cause Tmux to return a value we
+      # can hand to {self.parse}
+      #
+      # @return [String]
       def self.format_string
         result = ""
         @tmux_attrs.each do |var, opts|
@@ -36,6 +46,11 @@ module Appear
         result
       end
 
+      # Parse a raw data has as returned by the {Tmux} service into an instance
+      # of this class.
+      #
+      # @param tmux_hash [Hash]
+      # @param tmux [Tmux] the tmux service
       def self.parse(tmux_hash, tmux)
         result = { :tmux => tmux }
         tmux_hash.each do |var, tmux_val|
@@ -84,14 +99,22 @@ module Appear
         id
       end
 
+      # Split this pane
+      #
+      # @param opts [Hash]
       def split(opts = {})
         tmux.split_window(opts.merge(:t => target))
       end
 
+      # Reveal this pane
       def reveal
         tmux.reveal_pane(self)
       end
 
+      # Send keys to this pane
+      #
+      # @param keys [String]
+      # @param opts [Hash]
       def send_keys(keys, opts = {})
         tmux.send_keys(self, keys, opts)
       end
@@ -108,19 +131,28 @@ module Appear
       attr_reader :width, :tmux => :session_width, :parse => :to_i
       attr_reader :height, :tmux => :session_height, :parse => :to_i
 
+      # String suitable for use as the "target" specifier for a Tmux command
+      #
+      # @return [String]
       def target
         # session
         id
       end
 
+      # @return [Array<Window>]
       def windows
         tmux.windows.select { |w| w.session == session }
       end
 
+      # @return [Array<Client>]
       def clients
         tmux.clients.select { |c| c.session == session }
       end
 
+      # Create a new window in this session. By default, the window will be
+      # created at the end of the session.
+      #
+      # @param opts [Hash]
       def new_window(opts = {})
         win = windows.last.window || -1
         tmux.new_window(opts.merge(:t => "#{target}:#{win + 1}"))
@@ -145,10 +177,14 @@ module Appear
         :var => :active,
         :parse => proc {|b| b.to_i != 0}
 
+      # @return [Array<Pane>]
       def panes
         tmux.panes.select { |p| p.session == session && p.window == window }
       end
 
+      # String suitable for use as the "target" specifier for a Tmux command
+      #
+      # @return [String]
       def target
         # "#{session}:#{window}"
         id
@@ -166,6 +202,9 @@ module Appear
       # @return [String] session name
       attr_reader :session, :tmux => :client_session
 
+      # String suitable for use as the "target" specifier for a Tmux command
+      #
+      # @return [String]
       def target
         tty
       end
@@ -214,22 +253,30 @@ module Appear
       pane
     end
 
+    # Create a new window
     def new_window(opts = {})
       ipc_returning_one(command('new-window').flags(opts), Window)
     end
 
+    # Split a window
     def split_window(opts = {})
       ipc_returning_one(command('split-window').flags(opts), Pane)
     end
 
+    # Create a new session
     def new_session(opts = {})
       ipc_returning_one(command('new-session').flags(opts), Session)
     end
 
+    # Send keys to a pane
     def send_keys(pane, keys, opts = {})
       ipc(command('send-keys').flags(opts.merge(:t => pane.target)).args(*keys))
     end
 
+    # Construct a command that will attach the given session when run
+    #
+    # @param session [String] use Session#target
+    # @return [Appear::Util::CommandBuilder]
     def attach_session_command(session)
       command('attach-session').flags(:t => session)
     end

@@ -60,6 +60,21 @@ module Appear
       end
     end
 
+    # Execute the command. Will exit(3) with a status; does not return.
+    #
+    # @param all_args [Array<String>] something like ARGV
+    def execute(all_args)
+      argv = option_parser.parse(*all_args)
+
+      if @config.edit_file
+        return execute_edit(argv)
+      else
+        return execute_pid(argv)
+      end
+    end
+
+    private
+
     def execute_pid(argv)
       if argv.empty?
         pid = Process.pid
@@ -90,22 +105,11 @@ module Appear
 
       revealer = Appear::Instance.new(@config)
       # this is a sin, for now
+      # TODO: remove instance_variable_get, use a real API
       services = revealer.instance_variable_get('@all_services')
       ide = ::Appear::Editor::TmuxIde.new(services)
       ide.call(*argv)
     end
 
-    # Execute the command. Will exit(3) with a status; does not return.
-    #
-    # @param all_args [Array<String>] something like ARGV
-    def execute(all_args)
-      argv = option_parser.parse(*all_args)
-
-      if @config.edit_file
-        return execute_edit(argv)
-      else
-        return execute_pid(argv)
-      end
-    end
   end
 end

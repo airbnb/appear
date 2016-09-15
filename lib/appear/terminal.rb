@@ -2,11 +2,16 @@ require 'appear/service'
 require 'appear/constants'
 
 module Appear
+  # A base service that retrieves a usable Terminal instance, suitable for
+  # spawning command-line programs.
   class Terminals
     def initialize(terminals)
       @terminals = terminals
     end
 
+    # Get the Terminal instance
+    #
+    # @return [Terminal::MacTerminal]
     def get
       current || default
     end
@@ -25,6 +30,9 @@ module Appear
     end
   end
 
+  # This module contains Terminal service implementations. So far, we're only
+  # concerned with Mac usrs, so you can look at {MacTerminal} to read the
+  # interface.
   module Terminal
     # Base class for mac terminal support
     class MacTerminal < Service

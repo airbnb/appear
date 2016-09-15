@@ -29,6 +29,7 @@ module Appear
     class Nvim < Service
       # the `neovim-remote` command name
       NVR = 'nvr'.freeze
+      # the `nvim` command name
       NEOVIM = 'nvim'.freeze
 
       # the value to use for Vim buffers with no name. This is the UI value
@@ -145,6 +146,10 @@ module Appear
         end
       end
 
+      # Find the buffer for a given filename.
+      #
+      # @param filename [String]
+      # @return [Hash, nil] buffer info, nil if not found
       def find_buffer(filename)
         p = File.expand_path(filename)
         get_buffers.find do |buffer|
@@ -152,6 +157,10 @@ module Appear
         end
       end
 
+      # Find the pane for a given filename.
+      #
+      # @param filename [String]
+      # @return [Pane, nil] nil if not found
       def find_pane(filename)
         p = Pathname.new(filename).expand_path.to_s
         panes.find do |pane|
@@ -183,6 +192,9 @@ module Appear
         find_pane(filename)
       end
 
+      # Reveal a pane in Nvim
+      #
+      # @param pane [Pane]
       def reveal_pane(pane)
         # go to tab
         cmd("tabnext #{pane.tab}")
@@ -190,6 +202,8 @@ module Appear
         cmd("#{pane.window} . wincmd w")
       end
 
+      # Description of this Neovim socket and session.
+      # @return [String]
       def to_s
         "#<#{self.class.name}:0x#{'%x' % (object_id << 1)} in #{cwd.inspect}>"
       end

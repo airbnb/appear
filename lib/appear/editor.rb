@@ -40,29 +40,13 @@ module Appear
         @tmux_memo = ::Appear::Util::Memoizer.new
       end
 
-      def update_nvims
-        @nvims ||= {}
-        @nvim_to_cwd ||= {}
-        @cwd_to_nvim ||= {}
-        new_nvims = false
-
-        Nvim.sockets.each do |sock|
-          next if @nvims[sock]
-
-          new_nvims = true
-          nvim = Nvim.new(sock, services)
-          @nvims[sock] = nvim
-          cwd = nvim.cwd
-          @nvim_to_cwd[nvim] = cwd
-          @cwd_to_nvim[cwd] = nvim
-        end
-
-        if new_nvims
-          @cwd_by_depth = @cwd_to_nvim.keys.sort_by { |d| Pathname.new(d).each_filename.to_a.length }
-        end
-      end
-
+      # Check if a child path is contained by a parent path.
+      # @param parent [String]
+      # @param child [String]
+      # @return [Boolean]
+      #
       # as dumb as they come
+      # TODO: use a real path_contains algorithm.
       def path_contains?(parent, child)
         p, c = Pathname.new(parent), Pathname.new(child)
         c.expand_path.to_s.start_with?(p.expand_path.to_s)
@@ -183,9 +167,9 @@ module Appear
         false
       end
 
-      # reveal a file in an existing or new IDE session
+      # reveal files in an existing or new IDE session
       #
-      # @param filename [String]
+      # @param filenames [Array<String>]
       def call(*filenames)
         nvims = []
         nvim_to_session = {}
@@ -239,8 +223,38 @@ module Appear
         return p.to_s if p.directory?
         return p.dirname.to_s
       end
+
+      private
+
+      # creates a cached mapping of Nvim-related information for maximum lookup
+      # speed.
+      def update_nvims
+        @nvims ||= {}
+        @nvim_to_cwd ||= {}
+        @cwd_to_nvim ||= {}
+        new_nvims = false
+
+        Nvim.sockets.each do |sock|
+          next if @nvims[sock]
+
+          new_nvims = true
+          nvim = Nvim.new(sock, services)
+          @nvims[sock] = nvim
+          cwd = nvim.cwd
+          @nvim_to_cwd[nvim] = cwd
+          @cwd_to_nvim[cwd] = nvim
+        end
+
+        if new_nvims
+          @cwd_by_depth = @cwd_to_nvim.keys.sort_by { |d| Pathname.new(d).each_filename.to_a.length }
+        end
+      end
+
     end
 
+    # List of all editors. In the future, we should provide more editor support
+    # and extend this list, and then allow the user to choose the editor to
+    # Appear in.
     ALL = [TmuxIde]
   end
 end

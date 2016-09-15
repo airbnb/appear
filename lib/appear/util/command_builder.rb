@@ -1,6 +1,7 @@
 module Appear
   module Util
-    # Builds command strings
+    # Builds command strings.
+    #
     # @example A tmux query command
     #   tmux_panes = CommandBuilder.new(%w(tmux list-panes)).
     #     flags(:a => true, :F => '#{session_name} #{pane_index}')
@@ -24,6 +25,7 @@ module Appear
       # @param name [#to_s] flag name, eg 'cached' for --cached
       # @param val [Boolean, #to_s] flag value, eg '3fdb21'. Can pass "true"
       #   for boolean, set-only flags.
+      # @return self
       def flag(name, val)
         @flags[name] << val
         self
@@ -31,7 +33,12 @@ module Appear
 
       # Add a bunch of flags at once, using a map of flag => argument.
       #
-      # @param flag_map [Hash<#to_s, [TrueClass, #to_s]>]
+      # @param flag_map Hash<#to_s, [TrueClass, #to_s, Array<#to_s>]>
+      # @return self
+      #
+      # @example multiple duplicate args
+      #   CommandBuilder.new('foo').flags(:o => ['Val1', 'Val2]).to_s
+      #   # "foo -o Val1 -o Val2"
       def flags(flag_map)
         flag_map.each do |f, v|
           if v.is_a?(Array)
