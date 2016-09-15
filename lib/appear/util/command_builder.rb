@@ -5,11 +5,22 @@ module Appear
     # @example A tmux query command
     #   tmux_panes = CommandBuilder.new(%w(tmux list-panes)).
     #     flags(:a => true, :F => '#{session_name} #{pane_index}')
-    #   services.runner.run(tmux_panes.to_a)
+    #   output, status = Open3.capture2e(*tmux_panes.to_a)
     class CommandBuilder
       # @param command [#to_s, Array<#to_s>] the command. Use an array if you
       #   need multiple words before we start listing arguments, eg %w(vagrant
       #   up)
+      #
+      # @param opts [Hash] options hash
+      # @option opts [Boolean] :single_dash_long_flags When true, flags like
+      #   :foo will be printed like "-foo" instead of the default "--foo"
+      # @option opts [Boolean] :dashdash_after_flags When true, a "--" argument
+      #   will be inserted after the flags but before the arguments.
+      #
+      # @example dashdash_after_flags
+      #   c = CommandBuilder.new('ssh', :dashdash_after_flags => true)
+      #     .flags(:foo => 1, :b => true).args('a', 'b').to_s
+      #  # "ssh --foo 1 -b -- a b"
       def initialize(command, opts = {})
         @command = command
         @flags = opts.delete(:flags) || Hash.new { |h, k| h[k] = [] }
@@ -33,8 +44,8 @@ module Appear
 
       # Add a bunch of flags at once, using a map of flag => argument.
       #
-      # @param flag_map Hash<#to_s, [TrueClass, #to_s, Array<#to_s>]>
-      # @return self
+      # @param flag_map [Hash<#to_s, [TrueClass, #to_s, Array<#to_s>]>]
+      # @return [self]
       #
       # @example multiple duplicate args
       #   CommandBuilder.new('foo').flags(:o => ['Val1', 'Val2]).to_s
@@ -65,6 +76,9 @@ module Appear
       # Add a subcommand, with its own flags arguments, after the current
       # command. This is useful for eg building calls to nested commands.
       #
+      # @param name [#to_s, Array<#to_s>] the subcommand, see {#initialize}
+      # @param opts [Hash] see {#initialize}
+      #
       # @example eg, vagrant
       #   v_up = CommandBuilder.new('vagrant').flags(:root => pwd).subcommand('up') do |up|
       #     up.flags(:provider => :virtualbox', 'no-provision' => true).args('apollo')
@@ -72,8 +86,7 @@ module Appear
       def subcommand(name, opts = {})
         # use our options as the defaults
         # then use the given options as the overrides
-        # finally, override that the parent is this command
-        subc = CommandBuilder.new(name, @opts.merge(opts).merge(:parent => self))
+        subc = CommandBuilder.new(name, @options.merge(opts))
         yield(subc)
         args(*subc.to_a)
         self
