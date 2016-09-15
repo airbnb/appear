@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.2.0
+
+- new experimental feature: `appear --edit nvim FILES...` to edit files in Nvim inside Tmux
+  inside iTerm2. Support is limited.
+- refactors of many core components:
+  - Tmux service
+  - MacRevealers were split into Terminal services
+- new handy Utils classes in appear/util, including the very handy
+  `Appear::Util::CommandBuilder`, and the slightly less useful
+  `Appear::Util::Memoizer`.
+
 ## 1.1.1
 
 - passing in a PID was broken.
