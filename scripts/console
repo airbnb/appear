@@ -7,6 +7,7 @@
 require "bundler/setup"
 require "pry"
 require "appear"
+require "appear/editor"
 
 def create_appear_instance
   config = Appear::Config.new
@@ -16,6 +17,13 @@ def create_appear_instance
 end
 
 instance, config = create_appear_instance
-puts "generated instance #{instance} from config #{config}"
+services = instance.instance_variable_get('@all_services')
+# nvim = Appear::Editor::Nvim.find_for_file(File.expand_path('.'))
+# nvim = Appear::Editor::Nvim.new(Appear::Editor::Nvim.sockets.last, services)
+nvim = Appear::Editor::Nvim.find_for_file(__FILE__, services)
+ide = Appear::Editor::TmuxIde.new(services)
+puts "generated instance = #{instance} from config = #{config}"
+puts "connected nvim = #{nvim}"
+puts "generated ide = #{ide}"
 
 binding.pry

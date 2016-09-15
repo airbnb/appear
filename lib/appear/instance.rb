@@ -32,6 +32,10 @@ module Appear
       @all_services[:lsof] = Appear::Lsof.new(@all_services)
       @all_services[:mac_os] = Appear::MacOs.new(@all_services)
       @all_services[:tmux] = Appear::Tmux.new(@all_services)
+      @all_services[:terminals] = Appear::Terminals.new([
+        Appear::Terminal::Iterm2.new(@all_services),
+        Appear::Terminal::TerminalApp.new(@all_services),
+      ])
 
       # make sure we can use our processes service, and log stuff.
       super(@all_services)

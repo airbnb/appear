@@ -1,6 +1,6 @@
-require 'appear/join'
+require 'appear/util/join'
 
-RSpec.describe(Appear::Join) do
+RSpec.describe(Appear::Util::Join) do
   class Thing
     attr_reader :prop
     def initialize(prop = 'a')

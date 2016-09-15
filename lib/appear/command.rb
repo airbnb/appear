@@ -1,6 +1,7 @@
 require 'appear/constants'
 require 'appear/config'
 require 'appear/instance'
+require 'appear/editor'
 require 'optparse'
 
 module Appear
@@ -34,6 +35,11 @@ module Appear
           @config.record_runs = flag
         end
 
+        o.on('-e', '--edit [EDITOR]', "instead of revealing a PID, edit a file the given editor. Editors: #{::Appear::Editor::ALL.map {|c| c.name}}") do |flag|
+          @config.edit_file = true
+          @config.editor = flag
+        end
+
         o.on('--version', 'show version information, then exit') do
           puts "appear #{Appear::VERSION}"
           puts "  author: Jake Teton-Landis"
@@ -60,6 +66,16 @@ module Appear
     def execute(all_args)
       argv = option_parser.parse(*all_args)
 
+      if @config.edit_file
+        return execute_edit(argv)
+      else
+        return execute_pid(argv)
+      end
+    end
+
+    private
+
+    def execute_pid(argv)
       if argv.empty?
         pid = Process.pid
         start_message = "STARTING. pid: #{pid} (current process pid)"
@@ -83,5 +99,17 @@ module Appear
         exit 2
       end
     end
+
+    def execute_edit(argv)
+      raise ArgumentError.new("no file passed") if argv.empty?
+
+      revealer = Appear::Instance.new(@config)
+      # this is a sin, for now
+      # TODO: remove instance_variable_get, use a real API
+      services = revealer.instance_variable_get('@all_services')
+      ide = ::Appear::Editor::TmuxIde.new(services)
+      ide.call(*argv)
+    end
+
   end
 end

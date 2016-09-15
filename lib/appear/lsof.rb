@@ -1,5 +1,6 @@
 require 'appear/service'
-require 'appear/memoizer'
+require 'appear/util/memoizer'
+require 'appear/util/value_class'
 
 module Appear
   # raised if we can't parse a connection from an output line of the `lsof`
@@ -17,19 +18,46 @@ module Appear
 
     # A connection of a process to a file.
     # Created from one output row of `lsof`.
-    class Connection
-      attr_accessor :command_name, :pid, :user, :fd, :type, :device, :size, :node, :name, :file_name
-      def initialize(hash)
-        hash.each do |key, value|
-          raise LsofParseError.new("attr #{key.inspect} is nil") if value.nil?
-          send("#{key}=", value)
-        end
-      end
+    class Connection < ::Appear::Util::ValueClass
+      # @return [String]
+      property :command_name
+
+      # @return [Fixnum]
+      property :pid
+
+      # @return [String]
+      property :fd
+
+      # @return [String]
+      property :fd
+
+      # @return [String]
+      property :type
+
+      # @return [String]
+      property :device
+
+      # @return [String]
+      property :size
+
+      # @return [String]
+      property :node
+
+      # @return [String]
+      property :file_name
     end
 
     # Represents a pane's connection to a TTY.
     class PaneConnection
-      attr_reader :pane, :connection, :process
+      # @return [#tty] a Terminal emulator pane.
+      attr_reader :pane
+
+      # @return [Connection] an LSOF connection
+      attr_reader :connection
+
+      # @return [Appear::Processes::ProcessInfo] the process
+      attr_reader :process
+
       # @param pane [#tty] a pane in a terminal emulator
       # @param connection [Appear::Lsof::Connection] a connection of a process
       #   to a file -- usually a TTY device.
@@ -53,7 +81,7 @@ module Appear
 
     def initialize(*args)
       super(*args)
-      @lsof_memo = Memoizer.new
+      @lsof_memo = Util::Memoizer.new
     end
 
     # find any intersections where a process in the given tree is present in
@@ -117,7 +145,6 @@ module Appear
     private
 
     def lsof(file, opts = {})
-      error_line = nil
       @lsof_memo.call(file, opts) do
         pids = opts[:pids]
         if pids
@@ -127,8 +154,12 @@ module Appear
         end
         next [] if output.empty?
         rows = output.lines.map do |line|
-          error_line = line
-          command, pid, user, fd, type, device, size, node, name = line.strip.split(/\s+/)
+          line = line.strip
+          fields = line.split(/\s+/)
+          if fields.length < 9
+            raise LsofParseError.new("Not enough fields in line #{line.inspect}")
+          end
+          command, pid, user, fd, type, device, size, node, name = fields
           Connection.new({
             command_name: command,
             pid: pid.to_i,
@@ -137,14 +168,15 @@ module Appear
             type: type,
             device: device,
             size: size,
-            node: node,
+            node: node.to_i,
             file_name: name
           })
         end
+        # drop header row
         rows[1..-1]
       end
     rescue LsofParseError => err
-      log("lsof: parse error: #{err}, line: #{error_line}")
+      log("lsof: parse error: #{err}")
       []
     end
   end

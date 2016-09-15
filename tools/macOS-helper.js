@@ -27,6 +27,15 @@ var ScriptContext = this
 // -----------------------------------------------------------
 var PROGRAM_NAME = 'appear-macOS-helper'
 var Methods = {}
+function delegateMethod(methodName, klass, fn) {
+  result = function() {
+    var instance = new klass();
+    return instance[fn].apply(instance, arguments)
+  }
+  result.name = methodName
+  Methods[methodName] = result
+  return result
+}
 
 // entrypoint -------------------------------------------------
 // this is the main method of this script when it is called from the command line.
@@ -121,15 +130,21 @@ Iterm2.prototype.revealTty = function revealTty(tty) {
   return success;
 }
 
-Methods['iterm2_reveal_tty'] = function iterm2_reveal_tty(tty) {
-  var iterm2 = new Iterm2()
-  return iterm2.revealTty(tty)
+Iterm2.prototype.newWindow = function newWindow(command) {
+  var window = this.app.createWindowWithDefaultProfile({command: command})
+  var session = window.currentSession();
+
+  return {
+    win: window,
+    tab: window.currentTab(),
+    session: session,
+    tty: session.tty(),
+  };
 }
 
-Methods['iterm2_panes'] = function iterm2_panes() {
-  var iterm2 = new Iterm2()
-  return iterm2.panes()
-}
+delegateMethod('iterm2_reveal_tty', Iterm2, 'revealTty')
+delegateMethod('iterm2_panes', Iterm2, 'panes')
+delegateMethod('iterm2_new_window', Iterm2, 'newWindow')
 
 // -------------------------------------------------------------
 // Terminal.app library
@@ -168,15 +183,8 @@ Terminal.prototype.revealTty = function revealTty(tty) {
   return success
 }
 
-Methods['terminal_reveal_tty'] = function terminal_reveal_tty(tty) {
-  var terminal = new Terminal()
-  return terminal.revealTty(tty)
-}
-
-Methods['terminal_panes'] = function terminal_panes() {
-  var terminal = new Terminal()
-  return terminal.panes()
-}
+delegateMethod('terminal_reveal_tty', Terminal, 'revealTty')
+delegateMethod('terminal_panes', Terminal, 'panes')
 
 // for tests ----------------------------------------------
 
