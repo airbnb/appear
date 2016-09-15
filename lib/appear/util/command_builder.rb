@@ -8,8 +8,8 @@ module Appear
     #   output, status = Open3.capture2e(*tmux_panes.to_a)
     class CommandBuilder
       # @param command [#to_s, Array<#to_s>] the command. Use an array if you
-      #   need multiple words before we start listing arguments, eg %w(vagrant
-      #   up)
+      #   need multiple words before we start listing arguments, eg `%w(vagrant
+      #   up)`
       #
       # @param opts [Hash] options hash
       # @option opts [Boolean] :single_dash_long_flags When true, flags like
@@ -20,7 +20,7 @@ module Appear
       # @example dashdash_after_flags
       #   c = CommandBuilder.new('ssh', :dashdash_after_flags => true)
       #     .flags(:foo => 1, :b => true).args('a', 'b').to_s
-      #  # "ssh --foo 1 -b -- a b"
+      #   "ssh --foo 1 -b -- a b"
       def initialize(command, opts = {})
         @command = command
         @flags = opts.delete(:flags) || Hash.new { |h, k| h[k] = [] }
@@ -36,7 +36,7 @@ module Appear
       # @param name [#to_s] flag name, eg 'cached' for --cached
       # @param val [Boolean, #to_s] flag value, eg '3fdb21'. Can pass "true"
       #   for boolean, set-only flags.
-      # @return self
+      # @return [self]
       def flag(name, val)
         @flags[name] << val
         self
@@ -68,6 +68,7 @@ module Appear
       # option in the constructor.
       #
       # @param args [Array<#to_s>] args to add
+      # @return [self]
       def args(*args)
         @argv.concat(args)
         self
@@ -78,6 +79,9 @@ module Appear
       #
       # @param name [#to_s, Array<#to_s>] the subcommand, see {#initialize}
       # @param opts [Hash] see {#initialize}
+      # @yield [subc] Add flags and arguments to the subcommand
+      # @yieldparam [CommandBuilder] subc the subcommand
+      # @return [self]
       #
       # @example eg, vagrant
       #   v_up = CommandBuilder.new('vagrant').flags(:root => pwd).subcommand('up') do |up|
@@ -92,7 +96,10 @@ module Appear
         self
       end
 
-      # @return [Array<#to_s>] command arguments
+      # Render this command to an array of strings, suitable for execution with
+      # `system` or other methods that take an ARGV array.
+      #
+      # @return [Array<String>] the command
       def to_a
         res = [@command].flatten
         @flags.each do |name, params|
@@ -107,12 +114,15 @@ module Appear
         res.map { |v| v.to_s }
       end
 
+      # Render this command as a string, suitable for execution with `sh` or
+      # `system` or other methods that take a command string.
+      #
       # @return [String] the command
       def to_s
         to_a.shelljoin
       end
 
-      # Duplicate this command builder
+      # Duplicate this {CommandBuilder} instance.
       #
       # @return [CommandBuilder]
       def dup
