@@ -1,8 +1,13 @@
 require "bundler/gem_tasks"
 require "yard"
 require 'rspec/core/rake_task'
+require 'appear'
+require 'Open3'
+require 'fileutils'
+
 
 RSpec::Core::RakeTask.new(:spec)
+ROOT_PATH = Pathname.new(File.dirname(File.expand_path(__FILE__)))
 
 module BasicDocCoverage
   MINIMUM_COVERAGE = 25.0
@@ -46,6 +51,128 @@ module BasicDocCoverage
       end
     end
   end
+end
+
+class IdeAppBuilder
+  NAME = 'TmuxIde'
+
+  def initialize(opts = {})
+    @release = opts[:release] || false
+  end
+
+  def development?
+    !@release
+  end
+
+  def base
+    ::Appear::Util::CommandBuilder.new('platypus')
+  end
+
+  def suffixes
+    %w(
+    rb
+    )
+  end
+
+  # see https://developer.apple.com/library/prerelease/content/documentation/Miscellaneous/Reference/UTIRef/Articles/System-DeclaredUniformTypeIdentifiers.html
+  def utis
+    %w(
+    public.source-code
+    public.item
+    public.folder
+    )
+  end
+
+  def command
+    cmd = base.flags(
+      :name => NAME,
+      'interface-type' => 'None',
+      # TODO: pull these from MacVim?
+      # 'app-icon' => 'some.icns',
+      # 'document-icon' => 'some.icns',
+      :interpreter => '/usr/bin/ruby',
+      'app-version' => ::Appear::VERSION,
+      :author => 'Jake Teton-Landis',
+      'bundle-identifier' => "tl.jake.#{NAME}",
+      :droppable => true,
+      'quit-after-execution' => true,
+      :suffixes => suffixes.join('|'),
+      'uniform-type-identifiers' => utis.join('|'),
+    )
+
+    cmd.flags(:symlink => true) if development?
+
+    # read script from STDIN,
+    # build to build/TmuxIde.app
+    cmd.args(
+      ROOT_PATH.join('tools/app-main.rb'),
+      output_app
+    )
+
+    cmd
+  end
+
+  def build_dir
+    ROOT_PATH.join('build')
+  end
+
+  def output_app
+    build_dir.join("#{NAME}.app")
+  end
+
+  def resources
+    output_app.join('Contents/Resources')
+  end
+
+  def app_gem
+    resources.join('appear-gem')
+  end
+
+  def files
+    %w(bin lib tools appear.gemspec Gemfile Gemfile.lock)
+  end
+
+  def link_files!
+    files.each do |name|
+      src = ROOT_PATH.join(name)
+      dest = app_gem.join(name)
+      FileUtils.ln_s(src, dest)
+    end
+  end
+
+  def copy_files!
+    files.each do |name|
+      src = ROOT_PATH.join(name)
+      dest = app_gem.join(name)
+      FileUtils.cp_r(src, dest)
+    end
+  end
+
+  def run!
+    FileUtils.rm_rf(build_dir)
+    FileUtils.mkdir_p(build_dir)
+
+    # build the app with platypus
+    args = command.to_a
+    puts args
+    out, err, status = Open3.capture3(*args)
+    puts out unless out.empty?
+    raise err unless status.success?
+
+    # copy or link gem files into place
+    FileUtils.mkdir_p(app_gem)
+    if development?
+      link_files!
+    else
+      copy_files!
+    end
+  end
+end
+
+desc "build a mac app that can appear stuff"
+task :app do
+  builder = IdeAppBuilder.new
+  builder.run!
 end
 
 BasicDocCoverage.define_task(:doc)
