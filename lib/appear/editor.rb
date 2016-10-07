@@ -232,6 +232,7 @@ module Appear
         @nvims ||= {}
         @nvim_to_cwd ||= {}
         @cwd_to_nvim ||= {}
+        @cwd_by_depth ||= []
         new_nvims = false
 
         Nvim.sockets.each do |sock|
