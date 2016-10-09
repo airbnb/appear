@@ -93,6 +93,15 @@ module Appear
         @expr_memo = ::Appear::Util::Memoizer.new
       end
 
+      # @return [Boolean] true if there is a live Nvim connected to this socket
+      def alive?
+        begin
+          return pid
+        rescue
+          false
+        end
+      end
+
       # evaluate a Vimscript expression
       #
       # @param vimstring [String] the expression, eg "fnamemodify('~', ':p')"

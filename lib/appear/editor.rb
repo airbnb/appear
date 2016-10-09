@@ -238,8 +238,10 @@ module Appear
         Nvim.sockets.each do |sock|
           next if @nvims[sock]
 
-          new_nvims = true
           nvim = Nvim.new(sock, services)
+          next unless nvim.alive?
+
+          new_nvims = true
           @nvims[sock] = nvim
           cwd = nvim.cwd
           @nvim_to_cwd[nvim] = cwd
