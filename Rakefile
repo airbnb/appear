@@ -4,6 +4,7 @@ require 'rspec/core/rake_task'
 require 'appear'
 require 'Open3'
 require 'fileutils'
+require 'rexml/document'
 
 
 RSpec::Core::RakeTask.new(:spec)
@@ -60,6 +61,10 @@ class IdeAppBuilder
     @release = opts[:release] || false
   end
 
+  def bundle_identifier
+    "tl.jake.#{NAME}"
+  end
+
   def development?
     !@release
   end
@@ -69,9 +74,20 @@ class IdeAppBuilder
   end
 
   def suffixes
-    %w(
-    rb
-    )
+    f = File.new(assets_dir.join('MacVimInfo.plist'))
+    doc = REXML::Document.new(f)
+    array_key = REXML::XPath.first(doc, '/plist/dict/key[contains(., "CFBundleDocumentTypes")]')
+    types_array = array_key.next_element
+
+    all_exts = []
+
+    REXML::XPath.each(types_array, './dict/key[contains(., "CFBundleTypeExtensions")]') do |k|
+      ext_array = k.next_element
+      ext_array.elements.each do |ext|
+        all_exts << ext.text.to_s
+      end
+    end
+    all_exts
   end
 
   # see https://developer.apple.com/library/prerelease/content/documentation/Miscellaneous/Reference/UTIRef/Articles/System-DeclaredUniformTypeIdentifiers.html
@@ -92,7 +108,7 @@ class IdeAppBuilder
       :interpreter => '/usr/bin/ruby',
       'app-version' => ::Appear::VERSION,
       :author => 'Jake Teton-Landis',
-      'bundle-identifier' => "tl.jake.#{NAME}",
+      'bundle-identifier' => bundle_identifier,
       :droppable => true,
       'quit-after-execution' => true,
       :suffixes => suffixes.join('|'),
@@ -176,6 +192,19 @@ desc "build a mac app that can appear stuff"
 task :app do
   builder = IdeAppBuilder.new
   builder.run!
+end
+
+desc "use mac app for all source code files"
+task :default_app do
+  builder = IdeAppBuilder.new
+  sh "duti -s #{builder.bundle_identifier} public.source-code editor"
+  builder.suffixes.map {|s| '.' + s}.each do |ext|
+    begin
+      sh "duti -s #{builder.bundle_identifier} #{ext} editor"
+    rescue => err
+      puts err
+    end
+  end
 end
 
 BasicDocCoverage.define_task(:doc)
