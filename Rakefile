@@ -120,7 +120,7 @@ class IdeAppBuilder
     # read script from STDIN,
     # build to build/TmuxIde.app
     cmd.args(
-      ROOT_PATH.join('tools/app-main.rb'),
+      ROOT_PATH.join('mac_desktop_app/entrypoint.rb'),
       output_app
     )
 
@@ -128,7 +128,7 @@ class IdeAppBuilder
   end
 
   def assets_dir
-    ROOT_PATH.join('assets')
+    ROOT_PATH.join('mac_desktop_app/assets')
   end
 
   def build_dir
@@ -189,8 +189,14 @@ class IdeAppBuilder
 end
 
 desc "build a mac app that can appear stuff"
-task :app do
+task :app_dev do
   builder = IdeAppBuilder.new
+  builder.run!
+end
+
+desc "build a mac app that can appear stuff"
+task :app do
+  builder = IdeAppBuilder.new(:release => true)
   builder.run!
 end
 
