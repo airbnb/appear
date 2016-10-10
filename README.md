@@ -126,11 +126,23 @@ editor.
 This project will eventually be split into its own repo, but lives in Appear
 for now.
 
-Build the app:
 
-1. set up Neovim and [Neovim Remote](https://github.com/mhinz/neovim-remote).
+Set up Neovim:
+
+1. set up Neovim
+1. Set up [Neovim Remote](https://github.com/mhinz/neovim-remote).
    Follow the `nvr` install instructions. Make sure the binary ends up in
    /usr/local/bin, /usr/bin, or /bin.
+1. make sure you've got `tmux` in /usr/local/bin, too. `brew install tmux` if not.
+1. stick this in your .bashrc or .zshrc so that each Neovim process gets it's own socket:
+  ```bash
+  mkdir -p "$HOME/.vim/sockets/"
+  NVIM_LISTEN_ADDRESS="$HOME/.vim/sockets/vim-zsh-$$.sock"
+  ```
+  Without this snippet, we'll be unable to query or control existing nvim sessions.
+
+Build the app:
+
 1. `brew install platypus`, which is the app builder
 1. `bundle exec rake app` builds into ./build/TmuxIde.app
 
@@ -141,6 +153,9 @@ Use it as the default for all of your source code files:
 1. `brew install duti`, which is a tool we use to change default application for filetypes.
 1. `bundle exec rake app_defaults` will assign all source code extensions to
    open in TmuxIde by default.
+
+If you have any issues with the app, you can `tail -f /tmp/tmux-ide-*.log` to
+view log messages.
 
 ## contributing
 
