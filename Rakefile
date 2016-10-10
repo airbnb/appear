@@ -87,9 +87,8 @@ class IdeAppBuilder
     cmd = base.flags(
       :name => NAME,
       'interface-type' => 'None',
-      # TODO: pull these from MacVim?
-      # 'app-icon' => 'some.icns',
-      # 'document-icon' => 'some.icns',
+      'app-icon' => assets_dir.join('MacVim.icns'),
+      'document-icon' => assets_dir.join('MacVim-generic.icns'),
       :interpreter => '/usr/bin/ruby',
       'app-version' => ::Appear::VERSION,
       :author => 'Jake Teton-Landis',
@@ -110,6 +109,10 @@ class IdeAppBuilder
     )
 
     cmd
+  end
+
+  def assets_dir
+    ROOT_PATH.join('assets')
   end
 
   def build_dir
