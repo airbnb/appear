@@ -111,6 +111,37 @@ config.log_file = '/tmp/my-app-appear.log'
 Appear.appear(pid, config)
 ```
 
+## TmuxIde.app: open files in Nvim + Tmux
+
+I've started a project based on Appear's libraries to open files in Nvim +
+Tmux. I prefer Tmux and terminal-based programs to GUI editors, so I've always
+wanted to set console Vim as my default application for many filetypes.
+
+I've built a proof-of-concept scipt that intelligently opens clicked files in
+Nvim sessions inside Tmux windows. We use
+[Platypus](http://sveinbjorn.org/platypus) to turn the script into a Mac native
+app, and [`duti`](http://duti.org/) to assign our new app as the default
+editor.
+
+This project will eventually be split into its own repo, but lives in Appear
+for now.
+
+Build the app:
+
+1. set up Neovim and [Neovim Remote](https://github.com/mhinz/neovim-remote).
+   Follow the `nvr` install instructions. Make sure the binary ends up in
+   /usr/local/bin, /usr/bin, or /bin.
+1. `brew install platypus`, which is the app builder
+1. `bundle exec rake app` builds into ./build/TmuxIde.app
+
+Use it as the default for all of your source code files:
+
+1. Notify OS X that your app exits by running it once, you can find it in
+   ./build/TmuxIde.app. It'll display a dialog and then exit.
+1. `brew install duti`, which is a tool we use to change default application for filetypes.
+1. `bundle exec rake app_defaults` will assign all source code extensions to
+   open in TmuxIde by default.
+
 ## contributing
 
 First, get yourself set up:
