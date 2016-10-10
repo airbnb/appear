@@ -24,10 +24,22 @@ class AppearMacApp
     require 'appear'
   end
 
+  def modify_path_env
+    more_paths = %w(
+      /usr/local/bin
+    )
+    path = ENV['PATH'].split(':')
+    more_paths.each do |dir|
+      path.unshift(dir) unless path.include?(dir)
+    end
+    ENV['PATH'] = path.join(':')
+    logger.info("$PATH: #{ENV['PATH']}")
+  end
 
   def main
     logger.info('started main')
     load_library
+    modify_path_env
 
     if ARGV.empty?
       display_dialog(<<-EOS)
