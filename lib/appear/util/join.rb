@@ -4,7 +4,7 @@ module Appear
     # @see Join.join
     class Join
       # Join objects or hashes together where thier field values match. This
-      # method is analogous to a JOIN in SQL, althought the behavior is not
+      # method is analogous to a JOIN in SQL, although the behavior is not
       # exactly the same.
       #
       # @example
