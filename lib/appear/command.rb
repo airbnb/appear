@@ -55,7 +55,7 @@ module Appear
         o.separator ''
         o.separator 'Exit status:'
         o.separator '  0  if successfully revealed something,'
-        o.separator '  1  if an exception occured,'
+        o.separator '  1  if an exception occurred,'
         o.separator '  2  if there were no errors, but nothing was revealed.'
       end
     end

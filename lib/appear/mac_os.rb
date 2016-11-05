@@ -23,7 +23,7 @@ module Appear
     # @param method_name [String, Symbol] check the source of macOS-helper.js for method names.
     # @param data [Any, nil] json-able data to pass to the named method.
     # @return [Any] json data returned from the helper
-    # @raise [MacToolError] if an error occured
+    # @raise [MacToolError] if an error occurred
     def call_method(method_name, data = nil)
       command = [SCRIPT, method_name.to_s]
       command << data.to_json unless data.nil?
