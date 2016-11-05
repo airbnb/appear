@@ -64,7 +64,7 @@ module Appear
       end
 
       # Add arguments to this command. Arguments always come after flags, and
-      # may be seperated from flags with -- if you pass :dashdash_after_flags
+      # may be separated from flags with -- if you pass :dashdash_after_flags
       # option in the constructor.
       #
       # @param args [Array<#to_s>] args to add
