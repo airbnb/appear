@@ -22,7 +22,7 @@ module Appear
     #
     # I put this in my zshrc:
     # `export NVIM_LISTEN_ADDRESS="$HOME/.vim/sockets/vim-zsh-$$.sock"`
-    # this opens a seperate nvim socket for each new Zsh shell. You'll still
+    # this opens a separate nvim socket for each new Zsh shell. You'll still
     # get nvims trying to open the same socket if you use ctrl-z and fg and
     # stuff to manage 'em, but overall this solves needing command a bunch of
     # different things.
