@@ -3,7 +3,7 @@ module Appear
     # Class for joining objects based on hash value or method value.
     # @see Join.join
     class Join
-      # Join objects or hashes together where thier field values match. This
+      # Join objects or hashes together where their field values match. This
       # method is analogous to a JOIN in SQL, although the behavior is not
       # exactly the same.
       #
