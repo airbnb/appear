@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.1
+
+- Override == method for CommandBuilder class to make it more test friendly.
+
 ## 1.2.0
 
 - new experimental feature: `appear --edit nvim FILES...` to edit files in Nvim inside Tmux
