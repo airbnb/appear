@@ -36,7 +36,7 @@ Options:
 
 Exit status:
   0  if successfully revealed something,
-  1  if an exception occured,
+  1  if an exception occurred,
   2  if there were no errors, but nothing was revealed.
 ```
 

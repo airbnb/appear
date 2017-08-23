@@ -53,7 +53,7 @@ module Appear
         services.processes.pgrep(app_name).length > 0
       end
 
-      # Enumerate the panes (seperate interactive sessions) that this terminal
+      # Enumerate the panes (separate interactive sessions) that this terminal
       # program has.
       #
       # @abstract subclasses must implement this method.
