@@ -73,19 +73,19 @@ Here's how Appear works in a nutshell, given a `target_pid`
    iterm2, terminal.app) and ask the revealer if it can apply itself to the
    process tree.
 3. if a revealer finds an associated process in the tree (eg, tmux revealer
-finds the tmux server process), it performs its reveal action
-  - this usually involves invoking `lsof` on a `/dev/ttys*` device to see what
-    processes are talking on what ttys to each other, which takes a bunch of
-    time
-  - `lsof` in Appear is parallel, so grouped lsof calls are less expensive
-  - the Tmux revealer is smart enough to both focus the pane that the
-    `target_pid` is running in, AND to recurse the revealing process with the
-    tmux client id, to reveal the tmux client.
+   finds the tmux server process), it performs its reveal action
+    - this usually involves invoking `lsof` on a `/dev/ttys*` device to see what
+      processes are talking on what ttys to each other, which takes a bunch of
+      time
+    - `lsof` in Appear is parallel, so grouped lsof calls are less expensive
+    - the Tmux revealer is smart enough to both focus the pane that the
+      `target_pid` is running in, AND to recurse the revealing process with the
+      tmux client id, to reveal the tmux client.
 4. the revealer sends some instructions to the terminal emulator that contains
-the view for the PID
-  - for our Mac apps, this involves a helper process using [Javascript for
-    Automation][jfora], a JavaScript x Applescript crossover episode.
-  - for tmux this is just some shell commands, super easy.
+   the view for the PID
+    - for our Mac apps, this involves a helper process using [Javascript for
+      Automation][jfora], a JavaScript x Applescript crossover episode.
+    - for tmux this is just some shell commands, super easy.
 
 [jfora]: https://developer.apple.com/library/mac/releasenotes/InterapplicationCommunication/RN-JavaScriptForAutomation/Articles/OSX10-10.html#//apple_ref/doc/uid/TP40014508-CH109-SW1
 
@@ -126,3 +126,14 @@ Then, submit PRs from feature branches for review:
 1. run `bundle exec rake` to run tests and doc coverage
 1. commit and push your changes, however you do
 1. [open a PR against airbnb master](https://github.com/airbnb/appear/compare?expand=1)
+
+## releasing new versions
+
+You must be a collaborator on Rubygems.org, and a committer on the main repo at
+https://github.com/airbnb/appear.
+
+1. update lib/appear/version.rb with the new version number
+1. update CHANGELOG.md with changes in the new version
+1. commit those changes, and merge them to master
+1. checkout master
+1. `bundle exec rake release`
