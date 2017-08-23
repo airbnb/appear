@@ -137,6 +137,8 @@ module Appear
         other.class == self.class && other.state == self.state
       end
 
+      protected
+
       # Return all the instance variables in an array. This method is used
       # by the == method.
       def state

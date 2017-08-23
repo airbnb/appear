@@ -49,7 +49,7 @@ RSpec.describe Appear::Util::CommandBuilder do
   end
 
   describe '#==' do
-    it 'overrides the == method properly' do
+    it 'returns true for equals commands' do
       cmd1 = described_class.new('command name').flags(:parent => 'yep').args(1, 2)
       cmd2 = described_class.new('command name').flags(:parent => 'yep').args(1, 2)
       expect(cmd1).to be == cmd2
