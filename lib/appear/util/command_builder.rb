@@ -132,6 +132,17 @@ module Appear
         self.class.new(@command.dup, opts)
       end
 
+      # Override the == method
+      def ==(other)
+        other.class == self.class && other.state == self.state
+      end
+
+      # Return all the instance variables in an array. This method is used
+      # by the == method.
+      def state
+        self.instance_variables.map { |variable| self.instance_variable_get variable }
+      end
+
       private
 
       # @param flag [#to_s]

@@ -2,7 +2,7 @@ require 'pathname'
 
 module Appear
   # the version of Appear
-  VERSION = '1.2.0'
+  VERSION = '1.2.1'
 
   # root error for our library; all other errors inherit from this one.
   class Error < StandardError; end

@@ -47,4 +47,12 @@ RSpec.describe Appear::Util::CommandBuilder do
       expect(subject.to_s).to eq('foo --parent yep bar --child cow 1 2')
     end
   end
+
+  describe '#==' do
+    it 'overrides the == method properly' do
+      cmd1 = described_class.new('command name').flags(:parent => 'yep').args(1, 2)
+      cmd2 = described_class.new('command name').flags(:parent => 'yep').args(1, 2)
+      expect(cmd1).to be == cmd2
+    end
+  end
 end
