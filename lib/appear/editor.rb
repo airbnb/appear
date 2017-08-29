@@ -108,7 +108,7 @@ module Appear
       #
       # @param filename [String]
       def create_ide(filename)
-        dir = project_root(filename)
+        is_root, dir = project_root(filename)
 
         # find or create session
         tmux_session = services.tmux.sessions.sort_by { |s| s.windows.length }.last
@@ -132,16 +132,21 @@ module Appear
         # remember our pid list
         existing_nvims = services.processes.pgrep(Nvim::NEOVIM)
 
-        # split window across the middle, into a big and little pane
+        # split window across the middle, into a big and little pane if we're
+        # editing a project. Otherwise, we don't need the little terminal
+        # buddies.
         main = window.panes.first
         main.send_keys([Nvim.edit_command(filename).to_s, "\n"], :l => true)
-        left = main.split(:p => 30, :v => true, :c => dir)
-        # cut the smaller bottom pane in half
-        right = left.split(:p => 50, :h => true, :c => dir)
-        # put a vim in the top pane, and select it
-        #[left, right].each_with_index do |pane, idx|
-          #pane.send_keys(["bottom pane ##{idx}"], :l => true)
-        #end
+
+        if is_root
+          left = main.split(:p => 30, :v => true, :c => dir)
+          # cut the smaller bottom pane in half
+          right = left.split(:p => 50, :h => true, :c => dir)
+          # put a vim in the top pane, and select it
+          #[left, right].each_with_index do |pane, idx|
+            #pane.send_keys(["bottom pane ##{idx}"], :l => true)
+          #end
+        end
 
         # Hacky way to wait for nvim to launch! This should take at most 2
         # seconds, otherwise your vim is launching too slowley ;)
@@ -216,12 +221,12 @@ module Appear
             path.join(marker).exist?
           end
 
-          return path if is_root
+          return [true, path] if is_root
         end
 
         # no markers were found
-        return p.to_s if p.directory?
-        return p.dirname.to_s
+        return [true, p.to_s] if p.directory?
+        return [false, p.dirname.to_s]
       end
 
       private
@@ -232,13 +237,16 @@ module Appear
         @nvims ||= {}
         @nvim_to_cwd ||= {}
         @cwd_to_nvim ||= {}
+        @cwd_by_depth ||= []
         new_nvims = false
 
         Nvim.sockets.each do |sock|
           next if @nvims[sock]
 
-          new_nvims = true
           nvim = Nvim.new(sock, services)
+          next unless nvim.alive?
+
+          new_nvims = true
           @nvims[sock] = nvim
           cwd = nvim.cwd
           @nvim_to_cwd[nvim] = cwd
