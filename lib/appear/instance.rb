@@ -48,6 +48,11 @@ module Appear
     def call(pid)
       tree = process_tree(pid)
 
+      log "Process tree:"
+      tree.each do |info|
+        log "  #{info}"
+      end
+
       statuses = ::Appear::REVEALERS.map do |klass|
         revealer = klass.new(@all_services)
         revealer.call(tree)
